@@ -2,7 +2,60 @@
   "hash": "d36ef1e9",
   "configHash": "b85f38ba",
   "lockfileHash": "19893c07",
-  "browserHash": "e761fc1b",
-  "optimized": {},
-  "chunks": {}
+  "browserHash": "73e3037a",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "114861ae",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "ab3ae7d0",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "deb27d5b",
+      "needsInterop": true
+    },
+    "react-cookie": {
+      "src": "../../node_modules/react-cookie/esm/index.mjs",
+      "file": "react-cookie.js",
+      "fileHash": "f8450ec9",
+      "needsInterop": false
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "abfdd209",
+      "needsInterop": false
+    },
+    "reactstrap": {
+      "src": "../../node_modules/reactstrap/esm/index.js",
+      "file": "reactstrap.js",
+      "fileHash": "6cfad771",
+      "needsInterop": false
+    },
+    "leaflet": {
+      "src": "../../node_modules/leaflet/dist/leaflet-src.js",
+      "file": "leaflet.js",
+      "fileHash": "30d8897f",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-5HNGYYSW": {
+      "file": "chunk-5HNGYYSW.js"
+    },
+    "chunk-TVFQMRVC": {
+      "file": "chunk-TVFQMRVC.js"
+    },
+    "chunk-G3PMV62Z": {
+      "file": "chunk-G3PMV62Z.js"
+    }
+  }
 }

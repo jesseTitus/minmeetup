@@ -66,18 +66,40 @@ class EventController {
     }
 
     @GetMapping("events/available")
-    Collection<Event> availableEvents() {
-        return eventRepository.findAll();
+    Collection<Map<String, Object>> availableEvents() {
+        Collection<Event> allEvents = eventRepository.findAll();
+        return allEvents.stream().map(event -> {
+            Map<String, Object> eventWithGroup = new java.util.HashMap<>();
+            eventWithGroup.put("id", event.getId());
+            eventWithGroup.put("date", event.getDate());
+            eventWithGroup.put("title", event.getTitle());
+            eventWithGroup.put("description", event.getDescription());
+
+            if (event.getGroup() != null) {
+                Map<String, Object> groupInfo = new java.util.HashMap<>();
+                groupInfo.put("id", event.getGroup().getId());
+                groupInfo.put("name", event.getGroup().getName());
+                groupInfo.put("address", event.getGroup().getAddress());
+                groupInfo.put("city", event.getGroup().getCity());
+                groupInfo.put("stateOrProvince", event.getGroup().getStateOrProvince());
+                groupInfo.put("country", event.getGroup().getCountry());
+                groupInfo.put("postalCode", event.getGroup().getPostalCode());
+
+                eventWithGroup.put("group", groupInfo);
+            }
+
+            return eventWithGroup;
+        }).collect(java.util.stream.Collectors.toList());
     }
 
-    @GetMapping("/event/{id}")
+    @GetMapping("/events/{id}")
     ResponseEntity<?> getEvent(@PathVariable Long id) {
         Optional<Event> event = eventRepository.findById(id);
         return event.map(response -> ResponseEntity.ok().body(response))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @PostMapping("/event")
+    @PostMapping("/events")
     ResponseEntity<Event> createEvent(@Valid @RequestBody EventRequest eventRequest,
             @AuthenticationPrincipal OAuth2User principal) throws URISyntaxException {
         log.info("Request to create event: {}", eventRequest);
@@ -106,18 +128,18 @@ class EventController {
                 .build();
 
         Event result = eventRepository.save(event);
-        return ResponseEntity.created(new URI("/api/event/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/events/" + result.getId()))
                 .body(result);
     }
 
-    @PutMapping("/event/{id}")
+    @PutMapping("/events/{id}")
     ResponseEntity<Event> updateEvent(@Valid @RequestBody Event event) {
         log.info("Request to update event: {}", event);
         Event result = eventRepository.save(event);
         return ResponseEntity.ok().body(result);
     }
 
-    @DeleteMapping("/event/{id}")
+    @DeleteMapping("/events/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable Long id) {
         log.info("Request to delete event: {}", id);
         eventRepository.deleteById(id);
@@ -149,11 +171,11 @@ class EventController {
         }
 
         public java.time.Instant getDate() {
-            return date;
+            urn date;
         }
 
         public void setDate(java.time.Instant date) {
-            this.date = date;
+            s.date = date;
         }
 
         public Long getGroupId() {

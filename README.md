@@ -5,30 +5,35 @@ A full-stack web application for managing Java User Group (JUG) events and tours
 ## Features
 
 ### 🔐 Authentication & Security
+
 - OAuth2 authentication via Auth0
 - Secure session management
 - Protected API endpoints
 - Automatic login/logout handling
 
 ### 👥 Group Management
+
 - Browse available JUG groups
 - Join existing groups to your tour
 - Leave groups without deleting them
 - View group details and location information
 
 ### 📅 Event Management
+
 - Create and manage events for your groups
 - View all events on an interactive map
 - Event details with dates, descriptions, and locations
 - Filter events by group
 
 ### 🗺️ Interactive Maps
+
 - OpenStreetMap integration with Leaflet.js
 - Visual representation of event locations
 - Custom markers for different event types
 - Points of Interest (POI) list with event details
 
 ### 🎨 Modern UI
+
 - Responsive React frontend with Bootstrap
 - TypeScript for type safety
 - Modern component architecture
@@ -37,6 +42,7 @@ A full-stack web application for managing Java User Group (JUG) events and tours
 ## Tech Stack
 
 ### Backend
+
 - **Spring Boot 3.5.3** - Java framework
 - **Spring Security** - Authentication and authorization
 - **Spring Data JPA** - Database operations
@@ -45,6 +51,7 @@ A full-stack web application for managing Java User Group (JUG) events and tours
 - **Maven** - Build tool
 
 ### Frontend
+
 - **React 19** - UI framework
 - **TypeScript** - Type safety
 - **Vite** - Build tool and dev server
@@ -55,38 +62,44 @@ A full-stack web application for managing Java User Group (JUG) events and tours
 - **React Cookie** - Cookie management
 
 ### Authentication
+
 - **Auth0** - OAuth2 provider
 - **Spring Security OAuth2** - OAuth2 client integration
 
 ## API Endpoints
 
 ### Authentication Required
+
 All endpoints require OAuth2 authentication via Auth0.
 
 ### User Management
+
 - `GET /api/user` - Get current user information
 - `POST /api/logout` - Logout user and invalidate session
 
 ### Groups
+
 - `GET /api/groups` - Get all groups belonging to the authenticated user
 - `GET /api/groups/available` - Get all available JUG groups (public)
-- `GET /api/group/{id}` - Get specific group by ID
-- `POST /api/group` - Create a new group or join existing group
-- `PUT /api/group/{id}` - Update group information
-- `DELETE /api/group/{id}` - Delete a group
-- `DELETE /api/group/members/{id}` - Leave a group (remove user association)
+- `GET /api/groups/{id}` - Get specific group by ID
+- `POST /api/groups` - Create a new group or join existing group
+- `PUT /api/groups/{id}` - Update group information
+- `DELETE /api/groups/{id}` - Delete a group
+- `DELETE /api/groups/members/{id}` - Leave a group (remove user association)
 
 ### Events
+
 - `GET /api/events` - Get all events belonging to the authenticated user (with group details)
 - `GET /api/events/available` - Get all available events (public)
-- `GET /api/event/{id}` - Get specific event by ID
-- `POST /api/event` - Create a new event
-- `PUT /api/event/{id}` - Update event information
-- `DELETE /api/event/{id}` - Delete an event
+- `GET /api/events/{id}` - Get specific event by ID
+- `POST /api/events` - Create a new event
+- `PUT /api/events/{id}` - Update event information
+- `DELETE /api/events/{id}` - Delete an event
 
 ## Data Models
 
 ### Group
+
 - `id` - Unique identifier
 - `name` - Group name
 - `address` - Street address
@@ -97,6 +110,7 @@ All endpoints require OAuth2 authentication via Auth0.
 - `user` - Associated user (nullable)
 
 ### Event
+
 - `id` - Unique identifier
 - `title` - Event title
 - `description` - Event description
@@ -104,6 +118,7 @@ All endpoints require OAuth2 authentication via Auth0.
 - `group` - Associated group
 
 ### User
+
 - `id` - Auth0 user ID
 - `name` - User's display name
 - `email` - User's email address
@@ -111,11 +126,13 @@ All endpoints require OAuth2 authentication via Auth0.
 ## Getting Started
 
 ### Prerequisites
+
 - Java 17 or higher
 - Node.js 18.16.0 or higher
 - Maven 3.6 or higher
 
 ### Backend Setup
+
 1. Clone the repository
 2. Configure Auth0 OAuth2 credentials in `src/main/resources/application.properties`
 3. Run the Spring Boot application:
@@ -125,6 +142,7 @@ All endpoints require OAuth2 authentication via Auth0.
 4. Backend will be available at `http://localhost:8080`
 
 ### Frontend Setup
+
 1. Navigate to the frontend directory:
    ```bash
    cd my-app
@@ -140,7 +158,9 @@ All endpoints require OAuth2 authentication via Auth0.
 4. Frontend will be available at `http://localhost:5173`
 
 ### Production Build
+
 To build for production:
+
 ```bash
 mvn clean package -Pprod
 ```
@@ -148,6 +168,7 @@ mvn clean package -Pprod
 ## Security Configuration
 
 The application uses Spring Security with OAuth2 authentication:
+
 - All API endpoints require authentication
 - CSRF protection is enabled
 - Session management is configured
@@ -156,6 +177,7 @@ The application uses Spring Security with OAuth2 authentication:
 ## Database
 
 The application uses H2 in-memory database by default:
+
 - Database is automatically created on startup
 - Sample data is loaded via `Initializer.java`
 - Data persists for the duration of the application session

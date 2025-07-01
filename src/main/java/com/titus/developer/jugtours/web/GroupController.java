@@ -44,14 +44,14 @@ class GroupController {
         return groupRepository.findAll();
     }
 
-    @GetMapping("/group/{id}")
+    @GetMapping("/groups/{id}")
     ResponseEntity<?> getGroup(@PathVariable Long id) {
         Optional<Group> group = groupRepository.findById(id);
         return group.map(response -> ResponseEntity.ok().body(response))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @PostMapping("/group")
+    @PostMapping("/groups")
     ResponseEntity<Group> createGroup(@Valid @RequestBody Group group,
             @AuthenticationPrincipal OAuth2User principal) throws URISyntaxException {
         log.info("Request to create group: {}", group);
@@ -92,45 +92,45 @@ class GroupController {
                 .body(result);
     }
 
-    @PutMapping("/group/{id}")
+    @PutMapping("/groups/{id}")
     ResponseEntity<Group> updateGroup(@Valid @RequestBody Group group) {
         log.info("Request to update group: {}", group);
         Group result = groupRepository.save(group);
         return ResponseEntity.ok().body(result);
     }
 
-    @DeleteMapping("/group/{id}")
+    @DeleteMapping("/groups/{id}")
     public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
         log.info("Request to delete group: {}", id);
         groupRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/group/members/{id}")
-    public ResponseEntity<?> leaveGroup(@PathVariable Long id, 
-                                       @AuthenticationPrincipal OAuth2User principal) {
+    @DeleteMapping("/groups/members/{id}")
+    public ResponseEntity<?> leaveGroup(@PathVariable Long id,
+            @AuthenticationPrincipal OAuth2User principal) {
         log.info("Request to leave group: {}", id);
-        
+
         Map<String, Object> details = principal.getAttributes();
         String userId = details.get("sub").toString();
-        
+
         // Find the group
         Optional<Group> groupOpt = groupRepository.findById(id);
         if (groupOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         Group group = groupOpt.get();
-        
+
         // Check if the user is actually a member of this group
         if (group.getUser() == null || !group.getUser().getId().equals(userId)) {
             return ResponseEntity.badRequest().body("User is not a member of this group");
         }
-        
+
         // Remove the user from the group by setting user to null
         group.setUser(null);
         groupRepository.save(group);
-        
+
         return ResponseEntity.ok().build();
     }
 }

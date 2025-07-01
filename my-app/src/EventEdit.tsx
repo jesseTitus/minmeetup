@@ -40,7 +40,7 @@ const EventEdit = () => {
 
     // If editing existing event, fetch event data
     if (id !== "new") {
-      fetch(`/api/event/${id}`, { credentials: "include" })
+      fetch(`/api/events/${id}`, { credentials: "include" })
         .then((response) => response.json())
         .then((data) => setEvent(data))
         .catch((error) => {
@@ -61,7 +61,7 @@ const EventEdit = () => {
   const handleSubmit = async (formEvent: React.FormEvent) => {
     formEvent.preventDefault();
 
-    await fetch(`/api/event${event.id ? `/${event.id}` : ""}`, {
+    await fetch(`/api/events${event.id ? `/${event.id}` : ""}`, {
       method: event.id ? "PUT" : "POST",
       headers: {
         "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],

@@ -41,7 +41,7 @@ const EventList = () => {
 
     setLoading(true);
 
-    fetch(`/api/group/${groupId}`, { credentials: "include" })
+    fetch(`/api/groups/${groupId}`, { credentials: "include" })
       .then((response) => {
         if (response.status === 401 || response.status === 403) {
           window.location.href = "/oauth2/authorization/auth0";

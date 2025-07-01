@@ -26,10 +26,11 @@ class Initializer implements CommandLineRunner {
 
         Group djug = repository.findByName("Seattle JUG")
                 .orElseThrow(() -> new IllegalStateException("Seattle JUG group not found after initialization!"));
-        Event e = Event.builder().title("Micro Frontends for Java Developers")
+        Event e = Event.builder()
+                .title("Micro Frontends for Java Developers")
                 .description("JHipster now has microfrontend support!")
                 .date(Instant.parse("2022-09-13T17:00:00.000Z"))
-                // .group(djug)
+                .group(djug)
                 .build();
         djug.setEvents(Collections.singleton(e));
         repository.save(djug);

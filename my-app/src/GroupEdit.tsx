@@ -30,7 +30,7 @@ const GroupEdit = () => {
 
   useEffect(() => {
     if (id !== "new") {
-      fetch(`/api/group/${id}`, { credentials: "include" })
+      fetch(`/api/groups/${id}`, { credentials: "include" })
         .then((response) => response.json())
         .then((data) => setGroup(data))
         .catch((error) => {
@@ -46,7 +46,7 @@ const GroupEdit = () => {
     }
 
     try {
-      const response = await fetch(`/api/group/${groupId}`, {
+      const response = await fetch(`/api/groups/${groupId}`, {
         method: "DELETE",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -77,7 +77,7 @@ const GroupEdit = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    await fetch(`/api/group${group.id ? `/${group.id}` : ""}`, {
+    await fetch(`/api/groups${group.id ? `/${group.id}` : ""}`, {
       method: group.id ? "PUT" : "POST",
       headers: {
         "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],

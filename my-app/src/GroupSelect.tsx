@@ -84,7 +84,7 @@ const GroupSelect = () => {
 
   const addGroupToTour = async (group: Group) => {
     try {
-      const response = await fetch("/api/group", {
+      const response = await fetch("/api/groups", {
         method: "POST",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -122,7 +122,7 @@ const GroupSelect = () => {
 
   const leaveGroup = async (group: Group) => {
     try {
-      const response = await fetch(`/api/group/members/${group.id}`, {
+      const response = await fetch(`/api/groups/members/${group.id}`, {
         method: "DELETE",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],

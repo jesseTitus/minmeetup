@@ -45,7 +45,7 @@ const GroupList = () => {
 
   const leaveGroup = async (group: Group) => {
     try {
-      const response = await fetch(`/api/group/members/${group.id}`, {
+      const response = await fetch(`/api/groups/members/${group.id}`, {
         method: "DELETE",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -137,7 +137,7 @@ const GroupList = () => {
           </Button>
         </div>
         <h3>My JUG Tour</h3>
-        
+
         <Row>
           <Col md={8}>
             <Table className="mt-4">
