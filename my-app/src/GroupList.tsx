@@ -124,6 +124,32 @@ const GroupList = () => {
     );
   });
 
+  const eventList = groups.map((group) => {
+    return (
+      <tr key={group.id}>
+        <td>
+          {group.events?.map((event) => {
+            return (
+              <tr key={event.id}>
+                <td style={{ whiteSpace: "nowrap" }}>
+                  {new Intl.DateTimeFormat("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(event.date))}
+                </td>
+                <td>{event.title}</td>
+                <td>{event.description}</td>
+              </tr>
+            );
+          })}
+        </td>
+      </tr>
+    );
+  });
+
   return (
     <div>
       <AppNavbar />
@@ -151,6 +177,9 @@ const GroupList = () => {
               </thead>
               <tbody>{groupList}</tbody>
             </Table>
+
+            <h3>Your next events</h3>
+            {eventList}
           </Col>
           <Col md={4}>
             <Map />
