@@ -171,11 +171,11 @@ class EventController {
         }
 
         public java.time.Instant getDate() {
-            urn date;
+            return date;
         }
 
         public void setDate(java.time.Instant date) {
-            s.date = date;
+            this.date = date;
         }
 
         public Long getGroupId() {

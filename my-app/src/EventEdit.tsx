@@ -61,6 +61,12 @@ const EventEdit = () => {
   const handleSubmit = async (formEvent: React.FormEvent) => {
     formEvent.preventDefault();
 
+    // format the date to include seconds and timezone
+    const formattedEvent = {
+      ...event,
+      date: event.date ? `${event.date}:00Z` : event.date, // add sec and UTC
+    };
+
     await fetch(`/api/events${event.id ? `/${event.id}` : ""}`, {
       method: event.id ? "PUT" : "POST",
       headers: {
@@ -68,7 +74,7 @@ const EventEdit = () => {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(event),
+      body: JSON.stringify(formattedEvent),
       credentials: "include",
     })
       .then(() => {
