@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 @Data
 @NoArgsConstructor
@@ -21,5 +22,6 @@ public class User {
     @EqualsAndHashCode.Include
     private String id;
     private String name;
+    @Column(unique = true)
     private String email;
 }

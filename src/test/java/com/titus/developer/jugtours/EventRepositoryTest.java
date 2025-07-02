@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @DataJpaTest
@@ -120,5 +121,19 @@ public class EventRepositoryTest {
                 .orElse(null);
         assertThat(found).isNotNull();
         assertThat(found.getAttendees()).contains(user);
+    }
+
+    @Test
+    public void testDeleteEvent() {
+        Group group = new Group("Event Group");
+        groupRepository.save(group);
+
+        Event event = new Event();
+        event.setTitle("ToDelete");
+        event.setGroup(group);
+        eventRepository.save(event);
+        eventRepository.delete(event);
+        var found = eventRepository.findByTitle("ToDelete");
+        assertThat(found).isEmpty();
     }
 }

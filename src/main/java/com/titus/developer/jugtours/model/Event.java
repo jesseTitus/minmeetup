@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import java.time.Instant;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.Column;
 
 @Data
 @NoArgsConstructor
@@ -27,6 +28,7 @@ public class Event {
     @GeneratedValue
     private Long id;
     private Instant date;
+    @Column(unique = true)
     private String title;
     private String description;
 

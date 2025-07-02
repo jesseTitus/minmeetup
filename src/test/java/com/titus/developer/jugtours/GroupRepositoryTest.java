@@ -58,12 +58,27 @@ public class GroupRepositoryTest {
         assertThat(foundMembers).extracting("name").contains("User One", "User Two");
     }
 
-    // @Test
-    // public void testDeleteGroup() {
-    // Group group = new Group("ToDelete");
-    // groupRepository.save(group);
-    // groupRepository.delete(group);
-    // Optional<Group> found = groupRepository.findByName("ToDelete");
-    // assertThat(found).isEmpty();
-    // }
+    @Test
+    public void testDeleteGroup() {
+        Group group = new Group("ToDelete");
+        groupRepository.save(group);
+        groupRepository.delete(group);
+        Optional<Group> found = groupRepository.findByName("ToDelete");
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    public void testCannotSaveTwoGroupsWithSameName() {
+        Group group1 = new Group("JUG Alpha");
+        Group group2 = new Group("JUG Alpha");
+        groupRepository.save(group1);
+
+        Exception exception = null;
+        try {
+            groupRepository.saveAndFlush(group2);
+        } catch (Exception ex) {
+            exception = ex;
+        }
+        assertThat(exception).isNotNull();
+    }
 }

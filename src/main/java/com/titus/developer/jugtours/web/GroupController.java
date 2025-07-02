@@ -36,7 +36,7 @@ class GroupController {
 
     @GetMapping("/groups")
     Collection<Group> groups(Principal principal) {
-        return groupRepository.findAllById(principal.getName());
+        return groupRepository.findAllByUserId(principal.getName());
     }
 
     @GetMapping("/groups/available")
@@ -68,17 +68,17 @@ class GroupController {
         if (existingGroup.isPresent()) {
             // If the group already exists, associate it with the current user
             Group existing = existingGroup.get();
-            if (existing.getUser() == null) {
-                // Group exists but has no user, associate it with current user
-                existing.setUser(currentUser);
+            if (existing.getUsers().isEmpty()) {
+                // Group exists but has no users, associate it with current user
+                existing.addUser(currentUser);
                 Group result = groupRepository.save(existing);
                 return ResponseEntity.ok().body(result);
-            } else if (existing.getUser().getId().equals(userId)) {
+            } else if (existing.hasUser(userId)) {
                 // User already has this group
                 return ResponseEntity.ok().body(existing);
             } else {
                 // Group belongs to another user, create a new one
-                group.setUser(currentUser);
+                group.addUser(currentUser);
                 Group result = groupRepository.save(group);
                 return ResponseEntity.created(new URI("/api/group/" + result.getId()))
                         .body(result);
@@ -86,7 +86,7 @@ class GroupController {
         }
 
         // No existing group found, create new one
-        group.setUser(currentUser);
+        group.addUser(currentUser);
         Group result = groupRepository.save(group);
         return ResponseEntity.created(new URI("/api/group/" + result.getId()))
                 .body(result);
@@ -123,13 +123,21 @@ class GroupController {
         Group group = groupOpt.get();
 
         // Check if the user is actually a member of this group
-        if (group.getUser() == null || !group.getUser().getId().equals(userId)) {
+        if (!group.hasUser(userId)) {
             return ResponseEntity.badRequest().body("User is not a member of this group");
         }
 
-        // Remove the user from the group by setting user to null
-        group.setUser(null);
-        groupRepository.save(group);
+        // Find the user to remove
+        User userToRemove = group.getUsers().stream()
+                .filter(u -> u.getId().equals(userId))
+                .findFirst()
+                .orElse(null);
+
+        // Remove the user from the group
+        if (userToRemove != null) {
+            group.removeUser(userToRemove);
+            groupRepository.save(group);
+        }
 
         return ResponseEntity.ok().build();
     }

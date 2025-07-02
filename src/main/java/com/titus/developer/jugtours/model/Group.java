@@ -22,6 +22,7 @@ public class Group {
     @Id
     @GeneratedValue
     private Long id;
+    @Column(unique = true)
     @NonNull
     private String name;
     private String address;
@@ -43,4 +44,25 @@ public class Group {
     @JsonManagedReference
     @ToString.Exclude
     private Set<Event> events;
+
+    // Helper methods for managing users
+    public void addUser(User user) {
+        if (user != null) {
+            this.users.add(user);
+        }
+    }
+
+    public void removeUser(User user) {
+        if (user != null) {
+            this.users.remove(user);
+        }
+    }
+
+    public boolean hasUser(String userId) {
+        return this.users.stream().anyMatch(user -> user.getId().equals(userId));
+    }
+
+    public boolean hasUser(User user) {
+        return user != null && this.users.contains(user);
+    }
 }
