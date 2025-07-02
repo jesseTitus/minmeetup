@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
 
-    @Query("SELECT e FROM Event e JOIN e.attendees a WHERE a.id = :userId")
-    List<Event> findAllByUserId(@Param("userId") String userId);
+    @Query("SELECT e FROM Event e JOIN e.attendees a WHERE a.id = :id")
+    List<Event> findAllById(@Param("id") String id);
 
     Optional<Event> findByTitle(String string);
 }

@@ -5,11 +5,18 @@ import com.titus.developer.jugtours.model.EventRepository;
 
 import com.titus.developer.jugtours.model.Group;
 import com.titus.developer.jugtours.model.GroupRepository;
+import com.titus.developer.jugtours.model.User;
+import com.titus.developer.jugtours.model.UserRepository;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.TestPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.Set;
 
 @DataJpaTest
 public class EventRepositoryTest {
@@ -18,6 +25,8 @@ public class EventRepositoryTest {
     private EventRepository eventRepository;
     @Autowired
     private GroupRepository groupRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     public void testSaveAndFindEvent() {
@@ -33,5 +42,62 @@ public class EventRepositoryTest {
         Event found = eventRepository.findByTitle("Test Event").orElse(null);
         assertThat(found).isNotNull();
         assertThat(found.getTitle()).isEqualTo("Test Event");
+    }
+
+    @Test
+    public void testFindAllEventsByUserId() {
+
+        Group group = new Group("Test Group");
+        groupRepository.save(group);
+
+        User user1 = new User("id1", "User One", "one@example.com");
+        userRepository.save(user1);
+        userRepository.flush();
+
+        Event event1 = new Event();
+        event1.setTitle("Test Event 1");
+        event1.setGroup(group);
+        event1.setAttendees(Set.of(user1));
+        eventRepository.save(event1);
+
+        Event event2 = new Event();
+        event2.setTitle("Test Event 2");
+        event2.setGroup(group);
+        event2.setAttendees(Set.of(user1));
+        eventRepository.save(event2);
+
+        // Use the custom findAllById method that finds events by attendee ID
+        List<Event> userEvents = eventRepository.findAllById("id1");
+        assertThat(userEvents).hasSize(2);
+
+        // Check if both events are found by their titles
+        assertThat(userEvents).extracting("title")
+                .containsExactlyInAnyOrder("Test Event 1", "Test Event 2");
+    }
+
+    @Test
+    public void testFindAllAttendeesByEventId() {
+
+    }
+
+    @Test
+    public void testSaveEventWithAttendees() {
+        User user = new User("id1", "User One", "one@example.com");
+        userRepository.save(user);
+        userRepository.flush();
+
+        Group group = new Group("Event Group");
+        groupRepository.save(group);
+
+        Event event = new Event();
+        event.setTitle("Event with Attendee");
+        event.setGroup(group);
+        event.setAttendees(Set.of(user));
+        eventRepository.save(event);
+
+        Event found = eventRepository.findByTitle("Event with Attendee")
+                .orElse(null);
+        assertThat(found).isNotNull();
+        assertThat(found.getAttendees()).contains(user);
     }
 }
