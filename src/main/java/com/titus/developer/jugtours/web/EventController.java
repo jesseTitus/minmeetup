@@ -114,8 +114,8 @@ class EventController {
 
         // Find the group and verify user owns it
         Optional<Group> group = groupRepository.findById(eventRequest.getGroupId());
-        if (group.isEmpty() || group.get().getUser() == null ||
-                !group.get().getUser().getId().equals(userId)) {
+        if (group.isEmpty() || group.get().getUsers().isEmpty() ||
+                !group.get().hasUser(userId)) {
             return ResponseEntity.badRequest().build();
         }
 

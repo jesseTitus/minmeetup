@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Button, Container, Form, FormGroup, Input, Label } from "reactstrap";
+import { Button, Container, Form, FormGroup, Input, Label, Alert } from "reactstrap";
 import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 
@@ -24,11 +24,22 @@ const GroupEdit = () => {
     postalCode: "",
   };
   const [group, setGroup] = useState<Group>(initialFormState);
+  const [existingGroups, setExistingGroups] = useState<Group[]>([]);
+  const [showDuplicateError, setShowDuplicateError] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
   const [cookies] = useCookies(["XSRF-TOKEN"]);
 
   useEffect(() => {
+    // Fetch all existing groups for duplicate checking
+    fetch("/api/groups/available", { credentials: "include" })
+      .then((response) => response.json())
+      .then((data) => setExistingGroups(data))
+      .catch((error) => {
+        console.error("Error fetching groups:", error);
+      });
+
     if (id !== "new") {
       fetch(`/api/groups/${id}`, { credentials: "include" })
         .then((response) => response.json())
@@ -38,6 +49,15 @@ const GroupEdit = () => {
         });
     }
   }, [id, setGroup]);
+
+  const isDuplicateName = (name: string): boolean => {
+    if (!name.trim()) return false;
+    
+    return existingGroups.some(existingGroup => 
+      existingGroup.name.toLowerCase() === name.toLowerCase() && 
+      existingGroup.id !== group.id
+    );
+  };
 
   const remove = async (groupId: number) => {
     if (!groupId) {
@@ -72,10 +92,22 @@ const GroupEdit = () => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setGroup({ ...group, [name]: value });
+    
+    // Hide duplicate error when user starts typing a new name
+    if (name === "name" && showDuplicateError) {
+      setShowDuplicateError(false);
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setHasAttemptedSubmit(true);
+
+    // Check for duplicate name before submitting
+    if (isDuplicateName(group.name)) {
+      setShowDuplicateError(true);
+      return;
+    }
 
     await fetch(`/api/groups${group.id ? `/${group.id}` : ""}`, {
       method: group.id ? "PUT" : "POST",
@@ -103,6 +135,14 @@ const GroupEdit = () => {
       <AppNavbar />
       <Container>
         {title}
+        
+        {/* Error message for duplicate group name */}
+        {showDuplicateError && hasAttemptedSubmit && (
+          <Alert color="danger" style={{ backgroundColor: '#f8f9fa', borderColor: '#dc3545', color: '#dc3545' }}>
+            <strong>Error:</strong> A group with this name already exists. Please choose a unique name.
+          </Alert>
+        )}
+        
         <Form onSubmit={handleSubmit}>
           <FormGroup>
             <Label for="name">Name</Label>
@@ -113,6 +153,7 @@ const GroupEdit = () => {
               value={group.name || ""}
               onChange={handleChange}
               autoComplete="name"
+              invalid={showDuplicateError && hasAttemptedSubmit}
             />
           </FormGroup>
           <FormGroup>
@@ -173,7 +214,11 @@ const GroupEdit = () => {
             </FormGroup>
           </div>
           <FormGroup>
-            <Button color="primary" type="submit">
+            <Button 
+              color="primary" 
+              type="submit"
+              disabled={showDuplicateError && hasAttemptedSubmit}
+            >
               Save
             </Button>{" "}
             <Button color="secondary" tag={Link} to="/groups">

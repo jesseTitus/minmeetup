@@ -1,8 +1,5 @@
 package com.titus.developer.jugtours.model;
 
-import com.titus.developer.jugtours.model.Event;
-import com.titus.developer.jugtours.model.Group;
-import com.titus.developer.jugtours.model.GroupRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 

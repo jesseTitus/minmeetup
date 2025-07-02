@@ -4,7 +4,6 @@ import com.titus.developer.jugtours.model.Group;
 import com.titus.developer.jugtours.model.GroupRepository;
 import com.titus.developer.jugtours.model.User;
 import com.titus.developer.jugtours.model.UserRepository;
-import com.titus.developer.jugtours.model.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

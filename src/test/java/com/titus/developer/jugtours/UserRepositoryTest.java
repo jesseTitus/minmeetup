@@ -1,8 +1,5 @@
 package com.titus.developer.jugtours;
 
-import com.titus.developer.jugtours.model.EventRepository;
-import com.titus.developer.jugtours.model.Group;
-import com.titus.developer.jugtours.model.GroupRepository;
 import com.titus.developer.jugtours.model.User;
 import com.titus.developer.jugtours.model.UserRepository;
 
@@ -12,16 +9,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.Optional;
 
 @DataJpaTest
 public class UserRepositoryTest {
 
-    @Autowired
-    private EventRepository eventRepository;
-    @Autowired
-    private GroupRepository groupRepository;
     @Autowired
     private UserRepository userRepository;
 
