@@ -33,15 +33,29 @@ public class GroupRepositoryTest {
     public void testFindAllByIdReturnsOnlyUserGroups() {
         User user1 = new User("id1", "User One", "one@example.com");
         Group group1 = new Group("JUG Alpha");
-        group1.setUser(user1);
+        group1.getUsers().add(user1);
         Group group2 = new Group("JUG Beta");
-        group2.setUser(user1);
+        group2.getUsers().add(user1);
         groupRepository.save(group1);
         groupRepository.save(group2);
 
         List<Group> foundGroups = groupRepository.findAllByUserId("id1");
         assertThat(foundGroups).hasSize(2);
         assertThat(foundGroups).extracting("name").contains("JUG Alpha", "JUG Beta");
+    }
+
+    @Test
+    public void testFindAllMembersByGroupId() {
+        User user1 = new User("id1", "User One", "one@example.com");
+        User user2 = new User("id2", "User Two", "two@example.com");
+        Group group1 = new Group("JUG Alpha");
+        group1.getUsers().add(user1);
+        group1.getUsers().add(user2);
+        groupRepository.save(group1);
+
+        List<User> foundMembers = groupRepository.findAllMembersByGroupId(group1.getId());
+        assertThat(foundMembers).hasSize(2);
+        assertThat(foundMembers).extracting("name").contains("User One", "User Two");
     }
 
     // @Test

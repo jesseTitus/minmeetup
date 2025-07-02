@@ -77,7 +77,28 @@ public class EventRepositoryTest {
 
     @Test
     public void testFindAllAttendeesByEventId() {
+        User user1 = new User("id1", "User One", "one@example.com");
+        userRepository.save(user1);
+        User user2 = new User("id2", "User Two", "two@example.com");
+        userRepository.save(user2);
+        userRepository.flush();
 
+        Group group = new Group("Event Group");
+        groupRepository.save(group);
+
+        Event event = new Event();
+        event.setTitle("Event with Attendees");
+        event.setGroup(group);
+        event.setAttendees(Set.of(user1, user2)); // Add both users as attendees
+        eventRepository.save(event);
+
+        // Find the event by ID to get its attendees
+        List<User> attendees = eventRepository.findAllAttendeesById(event.getId());
+
+        // Check that both attendees are present and their names match
+        assertThat(attendees).hasSize(2);
+        assertThat(attendees).extracting("name")
+                .containsExactlyInAnyOrder("User One", "User Two");
     }
 
     @Test

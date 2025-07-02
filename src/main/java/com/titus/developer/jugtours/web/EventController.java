@@ -40,7 +40,7 @@ class EventController {
 
     @GetMapping("/events")
     Collection<Map<String, Object>> events(Principal principal) {
-        Collection<Event> userEvents = eventRepository.findAllByUserId(principal.getName());
+        Collection<Event> userEvents = eventRepository.findAllById(principal.getName());
         return userEvents.stream().map(event -> {
             Map<String, Object> eventWithGroup = new java.util.HashMap<>();
             eventWithGroup.put("id", event.getId());

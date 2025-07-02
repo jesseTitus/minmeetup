@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 @Data
 @NoArgsConstructor
 @RequiredArgsConstructor
-@ToString(exclude = { "events" })
+@ToString
 @Entity
 @Table(name = "user_group")
 public class Group {
@@ -29,11 +29,18 @@ public class Group {
     private String stateOrProvince;
     private String country;
     private String postalCode;
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    private User user;
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(
+        name = "group_members",
+        joinColumns = @JoinColumn(name = "group_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @ToString.Exclude
+    private Set<User> users = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @EqualsAndHashCode.Exclude // Exclude from hashCode/equals
     @JsonManagedReference
+    @ToString.Exclude
     private Set<Event> events;
 }
