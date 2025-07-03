@@ -25,6 +25,7 @@ public class Group {
     @Column(unique = true)
     @NonNull
     private String name;
+    private String imageUrl;
     private String address;
     private String city;
     private String stateOrProvince;

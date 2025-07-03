@@ -109,7 +109,7 @@ const EventList = () => {
             <p className="text-muted">
               {group.events?.length || 0} event(s) found
             </p>
-            <Button color="success" tag={Link} to="/events/new">
+            <Button color="success" tag={Link} to={`/events/new?groupId=${groupId}`}>
               Add New Event
             </Button>
           </CardBody>

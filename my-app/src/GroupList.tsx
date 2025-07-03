@@ -3,7 +3,6 @@ import { Button, ButtonGroup, Container, Table, Row, Col } from "reactstrap";
 import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 import { Link } from "react-router-dom";
-import Map from "./Map";
 
 interface Event {
   id: number;
@@ -15,6 +14,7 @@ interface Event {
 interface Group {
   id: number;
   name: string;
+  imageUrl?: string;
   address?: string;
   city?: string;
   stateOrProvince?: string;
@@ -26,10 +26,23 @@ interface Group {
 const GroupList = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [cookies] = useCookies(["XSRF-TOKEN"]);
 
   useEffect(() => {
     setLoading(true);
+
+    // Fetch user information
+    fetch("/api/user", { credentials: "include" })
+      .then((response) => response.text())
+      .then((body) => {
+        if (body !== "") {
+          setUser(JSON.parse(body));
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user:", error);
+      });
 
     fetch("/api/groups", { credentials: "include" })
       .then((response) => response.json())
@@ -72,6 +85,15 @@ const GroupList = () => {
     }
   };
 
+  // Get user's first name
+  const getFirstName = () => {
+    if (!user || !user.name) return "User";
+
+    // Split the full name and get the first part
+    const nameParts = user.name.split(" ");
+    return nameParts[0];
+  };
+
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -83,12 +105,27 @@ const GroupList = () => {
     return (
       <tr key={group.id}>
         <td style={{ whiteSpace: "nowrap" }}>
-          <Link
-            to={`/groups/${group.id}/events`}
-            style={{ textDecoration: "none", color: "#007bff" }}
-          >
-            {group.name} {group.id}
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <img
+              src={group.imageUrl || `https://picsum.photos/40/40?random=${group.id}`}
+              alt={group.name}
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "4px",
+                objectFit: "cover",
+              }}
+              onError={(e) => {
+                e.currentTarget.src = `https://picsum.photos/40/40?random=${group.id}`;
+              }}
+            />
+            <Link
+              to={`/groups/${group.id}/events`}
+              style={{ textDecoration: "none", color: "#007bff" }}
+            >
+              {group.name}
+            </Link>
+          </div>
         </td>
         <td>{address}</td>
         <td>
@@ -124,32 +161,6 @@ const GroupList = () => {
     );
   });
 
-  const eventList = groups.map((group) => {
-    return (
-      <tr key={group.id}>
-        <td>
-          {group.events?.map((event) => {
-            return (
-              <tr key={event.id}>
-                <td style={{ whiteSpace: "nowrap" }}>
-                  {new Intl.DateTimeFormat("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }).format(new Date(event.date))}
-                </td>
-                <td>{event.title}</td>
-                <td>{event.description}</td>
-              </tr>
-            );
-          })}
-        </td>
-      </tr>
-    );
-  });
-
   return (
     <div>
       <AppNavbar />
@@ -159,13 +170,15 @@ const GroupList = () => {
             Create
           </Button>
           <Button color="success" tag={Link} to="/groups/select">
-            Explore
+            Find more groups
           </Button>
         </div>
-        <h3>My JUG Tour</h3>
+        <h3 style={{ textAlign: "left", fontWeight: "bold" }}>
+          Welcome, {getFirstName()} 👋
+        </h3>
 
         <Row>
-          <Col md={8}>
+          <Col md={12}>
             <Table className="mt-4">
               <thead>
                 <tr>
@@ -177,12 +190,6 @@ const GroupList = () => {
               </thead>
               <tbody>{groupList}</tbody>
             </Table>
-
-            <h3>Your next events</h3>
-            {eventList}
-          </Col>
-          <Col md={4}>
-            <Map />
           </Col>
         </Row>
       </Container>

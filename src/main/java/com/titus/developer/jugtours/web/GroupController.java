@@ -4,6 +4,7 @@ import com.titus.developer.jugtours.model.Group;
 import com.titus.developer.jugtours.model.GroupRepository;
 import com.titus.developer.jugtours.model.User;
 import com.titus.developer.jugtours.model.UserRepository;
+import com.titus.developer.jugtours.service.ImageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -27,10 +28,12 @@ class GroupController {
     private final Logger log = LoggerFactory.getLogger(GroupController.class);
     private GroupRepository groupRepository;
     private UserRepository userRepository;
+    private ImageService imageService;
 
-    public GroupController(GroupRepository groupRepository, UserRepository userRepository) {
+    public GroupController(GroupRepository groupRepository, UserRepository userRepository, ImageService imageService) {
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
+        this.imageService = imageService;
     }
 
     @GetMapping("/groups")
@@ -86,6 +89,10 @@ class GroupController {
 
         // No existing group found, create new one
         group.addUser(currentUser);
+        
+        // Assign a random image to the group
+        group.setImageUrl(imageService.generateRandomImageUrl());
+        
         Group result = groupRepository.save(group);
         return ResponseEntity.created(new URI("/api/group/" + result.getId()))
                 .body(result);

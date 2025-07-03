@@ -11,6 +11,7 @@ import {
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import { useCookies } from "react-cookie";
+import { imageOverlay } from "leaflet";
 
 const AppNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -80,9 +81,42 @@ const AppNavbar = () => {
   }
 
   return (
-    <Navbar color="dark" dark expand="md">
-      <NavbarBrand tag={Link} to="/">
-        Home
+    <Navbar
+      color="white"
+      light
+      expand="md"
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
+        backgroundColor: "#ffffff !important",
+        borderBottom: "1px solid #e0e0e0",
+        boxShadow: "none",
+      }}
+    >
+      <NavbarBrand
+        tag={Link}
+        to={authenticated ? "/" : "/"}
+        style={{
+          color: "red",
+          fontWeight: "bold",
+          fontFamily: "Palatino, serif",
+          fontSize: "24px",
+        }}
+      >
+        <img
+          src="/minmeetup-logo.png"
+          alt="minmeetup"
+          style={{
+            height: "40px",
+            width: "auto",
+            backgroundColor: "transparent",
+            objectFit: "contain",
+            mixBlendMode: "multiply",
+            margin: "0",
+            padding: "0",
+          }}
+        />
       </NavbarBrand>
       <NavbarToggler
         onClick={() => {
@@ -92,13 +126,21 @@ const AppNavbar = () => {
       <Collapse isOpen={isOpen} navbar>
         <Nav className="justify-content-end" style={{ width: "100%" }} navbar>
           <NavItem>
-            <NavLink href="https://www.linkedin.com/in/jessejtitus/">
+            <NavLink
+              href="https://www.linkedin.com/in/jessejtitus/"
+              style={{ color: "black" }}
+            >
               @linkedin
             </NavLink>
           </NavItem>
 
           <NavItem>
-            <NavLink href="https://github.com/jesseTitus">GitHub</NavLink>
+            <NavLink
+              href="https://github.com/jesseTitus"
+              style={{ color: "black" }}
+            >
+              GitHub
+            </NavLink>
           </NavItem>
           <NavItem>{button}</NavItem>
         </Nav>

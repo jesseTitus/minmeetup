@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button, Container, Form, FormGroup, Input, Label } from "reactstrap";
 import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
@@ -28,6 +28,7 @@ const EventEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [cookies] = useCookies(["XSRF-TOKEN"]);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     // Fetch user's groups for the dropdown
@@ -46,8 +47,14 @@ const EventEdit = () => {
         .catch((error) => {
           console.error("Error fetching event:", error);
         });
+    } else {
+      // If creating new event, check for groupId in URL parameters
+      const groupIdFromUrl = searchParams.get("groupId");
+      if (groupIdFromUrl) {
+        setEvent(prev => ({ ...prev, groupId: parseInt(groupIdFromUrl) }));
+      }
     }
-  }, [id, setEvent]);
+  }, [id, setEvent, searchParams]);
 
   const handleChange = (
     eventChange: React.ChangeEvent<

@@ -28,7 +28,6 @@ public class Event {
     @GeneratedValue
     private Long id;
     private Instant date;
-    @Column(unique = true)
     private String title;
     private String description;
 
