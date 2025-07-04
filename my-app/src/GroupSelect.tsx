@@ -84,22 +84,13 @@ const GroupSelect = () => {
 
   const addGroupToTour = async (group: Group) => {
     try {
-      const response = await fetch("/api/groups", {
+      const response = await fetch(`/api/groups/members/${group.id}`, {
         method: "POST",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
           Accept: "application/json",
-          "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          name: group.name,
-          address: group.address,
-          city: group.city,
-          stateOrProvince: group.stateOrProvince,
-          country: group.country,
-          postalCode: group.postalCode,
-        }),
       });
 
       if (response.status === 401 || response.status === 403) {

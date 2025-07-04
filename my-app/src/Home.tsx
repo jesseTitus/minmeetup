@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import AppNavbar from "./AppNavbar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button, Container, Table, Row, Col } from "reactstrap";
 import { useCookies } from "react-cookie";
 import Map from "./Map";
@@ -41,6 +41,7 @@ interface SimpleGroup {
 }
 
 const Home = () => {
+  const navigate = useNavigate();
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | undefined>(undefined);
@@ -252,6 +253,7 @@ const Home = () => {
                 e.currentTarget.style.transform = "translateY(0)";
                 e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
               }}
+              onClick={() => navigate(`/events/${event.id}`)}
             >
               {/* Group image on the left */}
               <div

@@ -89,13 +89,51 @@ class GroupController {
 
         // No existing group found, create new one
         group.addUser(currentUser);
-        
+
         // Assign a random image to the group
         group.setImageUrl(imageService.generateRandomImageUrl());
-        
+
         Group result = groupRepository.save(group);
         return ResponseEntity.created(new URI("/api/group/" + result.getId()))
                 .body(result);
+    }
+
+    @PostMapping("/groups/members/{id}")
+    ResponseEntity<?> joinGroup(@PathVariable Long groupId,
+            @AuthenticationPrincipal OAuth2User principal) {
+        log.info("Request to join group: {}", groupId);
+        Map<String, Object> details = principal.getAttributes();
+        String userId = details.get("sub").toString();
+        log.info("User ID: {}", userId);
+
+        // Find or create user
+        Optional<User> user = userRepository.findById(userId);
+        User currentUser = user.orElse(new User(userId,
+                details.get("name").toString(), details.get("email").toString()));
+        log.info("Current user: {}", currentUser.getName());
+
+        // Find the group
+        Optional<Group> groupOpt = groupRepository.findById(groupId);
+        if (groupOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Group group = groupOpt.get();
+        log.info("Found group: {}", group.getName());
+
+        // Check if user is already a member
+        if (group.hasUser(userId)) {
+            log.info("User {} is already a member of group {}", userId, groupId);
+
+            return ResponseEntity.ok().body("User is already a member of this group");
+        }
+
+        // Add user to group
+        group.addUser(currentUser);
+        Group result = groupRepository.save(group);
+        log.info("User {} is already a member of group {}", userId, groupId);
+
+        return ResponseEntity.ok().body(result);
     }
 
     @PutMapping("/groups/{id}")
