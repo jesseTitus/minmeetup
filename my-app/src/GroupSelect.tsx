@@ -33,6 +33,7 @@ const GroupSelect = () => {
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [userGroups, setUserGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
+  const [processingGroups, setProcessingGroups] = useState<Set<number>>(new Set());
   const [cookies] = useCookies(["XSRF-TOKEN"]);
   const navigate = useNavigate();
 
@@ -83,6 +84,13 @@ const GroupSelect = () => {
   }, []);
 
   const addGroupToTour = async (group: Group) => {
+    // Prevent multiple clicks
+    if (processingGroups.has(group.id)) {
+      return;
+    }
+
+    setProcessingGroups(prev => new Set(prev).add(group.id));
+
     try {
       const response = await fetch(`/api/groups/members/${group.id}`, {
         method: "POST",
@@ -108,10 +116,23 @@ const GroupSelect = () => {
     } catch (error) {
       console.error("Error adding group to tour:", error);
       alert("Error adding group. Please try logging in again.");
+    } finally {
+      setProcessingGroups(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(group.id);
+        return newSet;
+      });
     }
   };
 
   const leaveGroup = async (group: Group) => {
+    // Prevent multiple clicks
+    if (processingGroups.has(group.id)) {
+      return;
+    }
+
+    setProcessingGroups(prev => new Set(prev).add(group.id));
+
     try {
       const response = await fetch(`/api/groups/members/${group.id}`, {
         method: "DELETE",
@@ -137,6 +158,12 @@ const GroupSelect = () => {
     } catch (error) {
       console.error("Error leaving group:", error);
       alert("Error leaving group. Please try logging in again.");
+    } finally {
+      setProcessingGroups(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(group.id);
+        return newSet;
+      });
     }
   };
 
@@ -184,11 +211,12 @@ const GroupSelect = () => {
           <Button
             size="sm"
             color={isMember ? "danger" : "success"}
+            disabled={processingGroups.has(group.id)}
             onClick={() =>
               isMember ? leaveGroup(group) : addGroupToTour(group)
             }
           >
-            {isMember ? "Leave" : "Join"}
+            {processingGroups.has(group.id) ? "Processing..." : (isMember ? "Leave" : "Join")}
           </Button>
         </td>
       </tr>

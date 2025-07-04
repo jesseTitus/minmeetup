@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -99,7 +100,8 @@ class GroupController {
     }
 
     @PostMapping("/groups/members/{id}")
-    ResponseEntity<?> joinGroup(@PathVariable Long groupId,
+    @Transactional
+    ResponseEntity<?> joinGroup(@PathVariable("id") Long groupId,
             @AuthenticationPrincipal OAuth2User principal) {
         log.info("Request to join group: {}", groupId);
         Map<String, Object> details = principal.getAttributes();
@@ -110,7 +112,14 @@ class GroupController {
         Optional<User> user = userRepository.findById(userId);
         User currentUser = user.orElse(new User(userId,
                 details.get("name").toString(), details.get("email").toString()));
-        log.info("Current user: {}", currentUser.getName());
+        
+        // Save the user if it's new
+        if (user.isEmpty()) {
+            currentUser = userRepository.save(currentUser);
+            log.info("Created new user: {}", currentUser.getName());
+        } else {
+            log.info("Found existing user: {}", currentUser.getName());
+        }
 
         // Find the group
         Optional<Group> groupOpt = groupRepository.findById(groupId);
@@ -124,14 +133,13 @@ class GroupController {
         // Check if user is already a member
         if (group.hasUser(userId)) {
             log.info("User {} is already a member of group {}", userId, groupId);
-
             return ResponseEntity.ok().body("User is already a member of this group");
         }
 
         // Add user to group
         group.addUser(currentUser);
         Group result = groupRepository.save(group);
-        log.info("User {} is already a member of group {}", userId, groupId);
+        log.info("User {} successfully joined group {}", userId, groupId);
 
         return ResponseEntity.ok().body(result);
     }
@@ -151,7 +159,8 @@ class GroupController {
     }
 
     @DeleteMapping("/groups/members/{id}")
-    public ResponseEntity<?> leaveGroup(@PathVariable Long id,
+    @Transactional
+    public ResponseEntity<?> leaveGroup(@PathVariable("id") Long id,
             @AuthenticationPrincipal OAuth2User principal) {
         log.info("Request to leave group: {}", id);
 
@@ -181,6 +190,7 @@ class GroupController {
         if (userToRemove != null) {
             group.removeUser(userToRemove);
             groupRepository.save(group);
+            log.info("User {} successfully left group {}", userId, id);
         }
 
         return ResponseEntity.ok().build();

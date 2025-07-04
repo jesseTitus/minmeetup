@@ -26,6 +26,13 @@ class Initializer implements CommandLineRunner {
 
         Group djug = repository.findByName("Seattle JUG")
                 .orElseThrow(() -> new IllegalStateException("Seattle JUG group not found after initialization!"));
+        
+        // Set location for Weekly Java Meetup at Grad Club, UWO
+        djug.setAddress("Grad Club");
+        djug.setCity("London");
+        djug.setStateOrProvince("ON");
+        djug.setCountry("Canada");
+        djug.setPostalCode("N6A 3K7");
 
         // Create 20 events, each 1 day apart starting from current date
         Set<Event> events = new HashSet<>();
