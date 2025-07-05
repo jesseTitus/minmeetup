@@ -12,7 +12,6 @@ import jakarta.persistence.Column;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "users")
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -24,4 +23,11 @@ public class User {
     private String name;
     @Column(unique = true)
     private String email;
+    private String profilePictureUrl;
+    
+    public User(String id, String name, String email) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+    }
 }

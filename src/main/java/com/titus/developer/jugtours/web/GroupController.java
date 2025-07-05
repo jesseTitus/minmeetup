@@ -115,6 +115,8 @@ class GroupController {
         
         // Save the user if it's new
         if (user.isEmpty()) {
+            // Assign a random profile picture to the new user
+            currentUser.setProfilePictureUrl(imageService.generateRandomProfilePictureUrl(userId));
             currentUser = userRepository.save(currentUser);
             log.info("Created new user: {}", currentUser.getName());
         } else {

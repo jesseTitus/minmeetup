@@ -28,4 +28,25 @@ public class ImageService {
     public String generateRandomImageUrl() {
         return generateRandomImageUrl(null);
     }
+    
+    /**
+     * Generates a random profile picture URL using Lorem Picsum
+     * @param seed Optional seed for consistent images (e.g., user ID)
+     * @return URL to a random profile picture
+     */
+    public String generateRandomProfilePictureUrl(String seed) {
+        if (seed != null) {
+            return String.format("https://picsum.photos/50/50?random=%s", seed);
+        } else {
+            return "https://picsum.photos/50/50?random=" + random.nextInt(1000);
+        }
+    }
+    
+    /**
+     * Generates a random profile picture URL without a specific seed
+     * @return URL to a random profile picture
+     */
+    public String generateRandomProfilePictureUrl() {
+        return generateRandomProfilePictureUrl(null);
+    }
 } 

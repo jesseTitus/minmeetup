@@ -6,6 +6,7 @@ import com.titus.developer.jugtours.model.Group;
 import com.titus.developer.jugtours.model.GroupRepository;
 import com.titus.developer.jugtours.model.User;
 import com.titus.developer.jugtours.model.UserRepository;
+import com.titus.developer.jugtours.service.ImageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,12 +32,14 @@ class EventController {
     private EventRepository eventRepository;
     private GroupRepository groupRepository;
     private UserRepository userRepository;
+    private ImageService imageService;
 
     public EventController(EventRepository eventRepository, GroupRepository groupRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, ImageService imageService) {
         this.eventRepository = eventRepository;
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
+        this.imageService = imageService;
     }
 
     @GetMapping("/events")
@@ -163,6 +166,8 @@ class EventController {
 
         // Save the user if it's new
         if (user.isEmpty()) {
+            // Assign a random profile picture to the new user
+            currentUser.setProfilePictureUrl(imageService.generateRandomProfilePictureUrl(userId));
             currentUser = userRepository.save(currentUser);
             log.info("Created new user: {}", currentUser.getName());
         } else {

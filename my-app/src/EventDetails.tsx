@@ -28,6 +28,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  profilePictureUrl?: string;
 }
 
 const EventDetails = () => {
@@ -255,19 +256,63 @@ const EventDetails = () => {
                   </p>
                 </div>
 
-                <div style={{ marginBottom: "20px" }}>
-                  <h6>Attendees</h6>
-                  <p>
-                    {attendeeCount} attendee{attendeeCount !== 1 ? "s" : ""}
-                  </p>
-                  {event.attendees && event.attendees.length > 0 && (
-                    <ul>
-                      {event.attendees.map((attendee) => (
-                        <li key={attendee.id}>{attendee.name}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                                  <div style={{ marginBottom: "20px" }}>
+                    <h6>Attendees ({attendeeCount})</h6>
+                    {event.attendees && event.attendees.length > 0 && (
+                      <div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
+                          {event.attendees.slice(0, 4).map((attendee) => {
+                            const nameParts = attendee.name.split(" ");
+                            const firstName = nameParts[0];
+                            const displayName = `${firstName}`;
+
+                            return (
+                              <div
+                                key={attendee.id}
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                  backgroundColor: "white",
+                                  border: "1px solid #ddd",
+                                  borderRadius: "8px",
+                                  padding: "8px",
+                                  minWidth: "60px",
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                }}
+                              >
+                                <img
+                                  src={
+                                    attendee.profilePictureUrl ||
+                                    `https://picsum.photos/40/40?random=${attendee.id}`
+                                  }
+                                  alt={displayName}
+                                  style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                    marginBottom: "4px",
+                                  }}
+                                  onError={(e) => {
+                                    e.currentTarget.src = `https://picsum.photos/40/40?random=${attendee.id}`;
+                                  }}
+                                />
+                                <span style={{ fontSize: "12px", textAlign: "center" }}>
+                                  {displayName}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {event.attendees.length > 4 && (
+                          <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
+                            + {event.attendees.length - 4} more attendee{event.attendees.length - 4 !== 1 ? "s" : ""}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                 {event.group && (
                   <div style={{ marginBottom: "20px" }}>
