@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, ButtonGroup, Container, Table, Row, Col } from "reactstrap";
+import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
 import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 import { Link } from "react-router-dom";
@@ -98,66 +98,123 @@ const GroupList = () => {
     return <p>Loading...</p>;
   }
 
-  const groupList = groups.map((group) => {
+  const groupCards = groups.map((group) => {
     const address = `${group.address || ""} ${group.city || ""} ${
       group.stateOrProvince || ""
-    }`;
+    }`.trim();
+
+    const eventCount = group.events ? group.events.length : 0;
+
     return (
-      <tr key={group.id}>
-        <td style={{ whiteSpace: "nowrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <Col key={group.id} md={4} lg={3} className="mb-4">
+        <Link
+          to={`/groups/${group.id}/events`}
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
+          <Card
+            style={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+            }}
+          >
+          <div
+            style={{
+              height: "150px",
+              overflow: "hidden",
+              borderTopLeftRadius: "0.375rem",
+              borderTopRightRadius: "0.375rem",
+            }}
+          >
             <img
-              src={group.imageUrl || `https://picsum.photos/40/40?random=${group.id}`}
+              src={
+                group.imageUrl ||
+                `https://picsum.photos/300/200?random=${group.id}`
+              }
               alt={group.name}
               style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "4px",
+                width: "100%",
+                height: "100%",
                 objectFit: "cover",
               }}
               onError={(e) => {
-                e.currentTarget.src = `https://picsum.photos/40/40?random=${group.id}`;
+                e.currentTarget.src = `https://picsum.photos/300/200?random=${group.id}`;
               }}
             />
-            <Link
-              to={`/groups/${group.id}/events`}
-              style={{ textDecoration: "none", color: "#007bff" }}
+          </div>
+          <CardBody
+            style={{ flex: 1, display: "flex", flexDirection: "column" }}
+          >
+            <h5
+              style={{
+                marginBottom: "10px",
+                fontWeight: "bold",
+                color: "#333",
+              }}
             >
               {group.name}
-            </Link>
-          </div>
-        </td>
-        <td>{address}</td>
-        <td>
-          {group.events?.map((event) => {
-            return (
-              <div key={event.id}>
-                {new Intl.DateTimeFormat("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "2-digit",
-                }).format(new Date(event.date))}
-                : {event.title}
-              </div>
-            );
-          })}
-        </td>
-        <td>
-          <ButtonGroup>
-            <Button
-              size="sm"
-              color="primary"
-              tag={Link}
-              to={"/groups/" + group.id}
+            </h5>
+
+            {address && (
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#666",
+                  marginBottom: "10px",
+                  flex: 1,
+                }}
+              >
+                📍 {address}
+              </p>
+            )}
+
+            <p
+              style={{
+                fontSize: "14px",
+                color: "#666",
+                marginBottom: "15px",
+                flex: 1,
+              }}
             >
-              Manage
-            </Button>
-            <Button size="sm" color="danger" onClick={() => leaveGroup(group)}>
-              Leave
-            </Button>
-          </ButtonGroup>
-        </td>
-      </tr>
+              📅 {eventCount} event{eventCount !== 1 ? "s" : ""}
+            </p>
+
+            <div style={{ marginTop: "auto" }}>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <Button
+                  size="sm"
+                  color="primary"
+                  tag={Link}
+                  to={"/groups/" + group.id}
+                  style={{ flex: 1 }}
+                >
+                  Manage
+                </Button>
+                <Button
+                  size="sm"
+                  color="danger"
+                  onClick={() => leaveGroup(group)}
+                  style={{ flex: 1 }}
+                >
+                  Leave
+                </Button>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+        </Link>
+      </Col>
     );
   });
 
@@ -177,21 +234,23 @@ const GroupList = () => {
           Welcome, {getFirstName()} 👋
         </h3>
 
-        <Row>
-          <Col md={12}>
-            <Table className="mt-4">
-              <thead>
-                <tr>
-                  <th style={{ width: "20%" }}>Name</th>
-                  <th style={{ width: "20%" }}>Location</th>
-                  <th>Events</th>
-                  <th style={{ width: "10%" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>{groupList}</tbody>
-            </Table>
-          </Col>
-        </Row>
+        {groups.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "60px 20px",
+              color: "#666",
+            }}
+          >
+            <h4>No groups yet</h4>
+            <p>Join some groups to get started with your JUG Tour!</p>
+            <Button color="primary" tag={Link} to="/groups/select">
+              Find Groups
+            </Button>
+          </div>
+        ) : (
+          <Row className="mt-4">{groupCards}</Row>
+        )}
       </Container>
     </div>
   );

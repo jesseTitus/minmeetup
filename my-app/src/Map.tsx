@@ -7,9 +7,12 @@ import { Link } from "react-router-dom";
 // Fix for default markers in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
 interface Location {
@@ -98,12 +101,16 @@ const Map: React.FC = () => {
     const mapCenter = location || { latitude: 43.0096, longitude: -81.2737 };
 
     // Initialize the map
-    const map = L.map(mapRef.current).setView([mapCenter.latitude, mapCenter.longitude], 15);
+    const map = L.map(mapRef.current).setView(
+      [mapCenter.latitude, mapCenter.longitude],
+      15
+    );
     mapInstanceRef.current = map;
 
     // Add OpenStreetMap tiles
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution:
+        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
     // Add user location marker with custom icon
@@ -114,7 +121,9 @@ const Map: React.FC = () => {
       iconAnchor: [15, 30],
     });
 
-    const userMarker = L.marker([mapCenter.latitude, mapCenter.longitude], { icon: userIcon })
+    const userMarker = L.marker([mapCenter.latitude, mapCenter.longitude], {
+      icon: userIcon,
+    })
       .addTo(map)
       .bindPopup("You are here!");
 
@@ -122,14 +131,20 @@ const Map: React.FC = () => {
     poiLocations.forEach((poi, index) => {
       const poiIcon = L.divIcon({
         className: "custom-poi-marker",
-        html: `<div style="background: #e74c3c; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">${poi.name.charAt(0)}</div>`,
+        html: `<div style="background: #e74c3c; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">${poi.name.charAt(
+          0
+        )}</div>`,
         iconSize: [25, 25],
         iconAnchor: [12, 12],
       });
 
       L.marker([poi.lat, poi.lng], { icon: poiIcon })
         .addTo(map)
-        .bindPopup(`<b>${poi.name}</b><br>Lat: ${poi.lat.toFixed(4)}<br>Lng: ${poi.lng.toFixed(4)}`);
+        .bindPopup(
+          `<b>${poi.name}</b><br>Lat: ${poi.lat.toFixed(
+            4
+          )}<br>Lng: ${poi.lng.toFixed(4)}`
+        );
     });
 
     // Cleanup function
@@ -157,7 +172,7 @@ const Map: React.FC = () => {
       <CardBody>
         <CardTitle>Map</CardTitle>
         {error && <Alert color="warning">{error}</Alert>}
-        
+
         <div className="mt-3">
           <div
             style={{
@@ -170,11 +185,8 @@ const Map: React.FC = () => {
             }}
           >
             {/* Leaflet map container */}
-            <div 
-              ref={mapRef} 
-              style={{ width: "100%", height: "100%" }}
-            />
-            
+            <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
+
             {/* Map legend */}
             <div
               style={{
@@ -196,27 +208,12 @@ const Map: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="mt-2">
           <small className="text-muted">
-            Interactive map with custom markers. Click on markers for more information.
+            Interactive map with custom markers. Click on markers for more
+            information.
           </small>
-        </div>
-
-        {/* POI List */}
-        <div className="mt-3">
-          <h6>Nearby Points of Interest:</h6>
-          <div style={{ maxHeight: "150px", overflowY: "auto" }}>
-            {poiLocations.map((poi, index) => (
-              <div key={index} className="mb-1 p-2 border rounded">
-                <strong>{poi.name}</strong>
-                <br />
-                <small className="text-muted">
-                  Lat: {poi.lat.toFixed(4)}, Lng: {poi.lng.toFixed(4)}
-                </small>
-              </div>
-            ))}
-          </div>
         </div>
 
         {events.length > 0 && (
@@ -247,11 +244,6 @@ const Map: React.FC = () => {
                   )}
                 </div>
               ))}
-            </div>
-            <div className="mt-2">
-              <Button color="success" tag={Link} to="/events/new" size="sm">
-                Add New Event
-              </Button>
             </div>
           </div>
         )}

@@ -1,7 +1,9 @@
 package com.titus.developer.jugtours.model;
 
+import com.titus.developer.jugtours.service.ImageService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -14,12 +16,17 @@ import java.util.stream.Stream;
 class Initializer implements CommandLineRunner {
 
     private final GroupRepository repository;
+    private final UserRepository userRepository;
+    private final ImageService imageService;
 
-    public Initializer(GroupRepository repository) {
+    public Initializer(GroupRepository repository, UserRepository userRepository, ImageService imageService) {
         this.repository = repository;
+        this.userRepository = userRepository;
+        this.imageService = imageService;
     }
 
     @Override
+    @Transactional
     public void run(String... strings) {
         Stream.of("Seattle JUG", "Denver JUG", "Dublin JUG",
                 "London JUG").forEach(name -> repository.save(new Group(name)));
@@ -34,6 +41,15 @@ class Initializer implements CommandLineRunner {
         djug.setCountry("Canada");
         djug.setPostalCode("N6A 3K7");
 
+        // Create an example user who is a member of Seattle JUG and attends all events
+        User exampleUser = new User(
+            "example-user-123",
+            "John Smith",
+            "john.smith@example.com"
+        );
+        exampleUser.setProfilePictureUrl(imageService.generateRandomProfilePictureUrl("example-user-123"));
+        userRepository.save(exampleUser);
+
         // Create 20 events, each 1 day apart starting from current date
         Set<Event> events = new HashSet<>();
         LocalDateTime startDate = LocalDateTime.now();
@@ -47,12 +63,22 @@ class Initializer implements CommandLineRunner {
                     .date(eventDate.toInstant(ZoneOffset.UTC))
                     .group(djug)
                     .build();
+            
+            // Add the example user as an attendee to each event
+            event.addAttendee(exampleUser);
             events.add(event);
         }
 
         djug.setEvents(events);
+        
+        // Add the example user to the Seattle JUG group
+        djug.addUser(exampleUser);
+        
+        // Save everything in one transaction
         repository.save(djug);
 
+        System.out.println("Created example user: " + exampleUser.getName());
+        System.out.println("Example user is now a member of Seattle JUG and attending all events");
         repository.findAll().forEach(System.out::println);
     }
 }

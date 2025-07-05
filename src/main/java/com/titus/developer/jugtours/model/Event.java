@@ -42,20 +42,24 @@ public class Event {
 
     // helper methods for managing attendees
     public void addAttendee(User user) {
-        if (user != null)
+        if (user != null) {
+            if (this.attendees == null) {
+                this.attendees = new java.util.HashSet<>();
+            }
             this.attendees.add(user);
+        }
     }
 
     public void removeAttendee(User user) {
-        if (user != null)
+        if (user != null && this.attendees != null)
             this.attendees.remove(user);
     }
 
     public boolean hasAttendee(String userId) {
-        return this.attendees.stream().anyMatch(user -> user.getId().equals(userId));
+        return this.attendees != null && this.attendees.stream().anyMatch(user -> user.getId().equals(userId));
     }
 
     public boolean hasAttendee(User user) {
-        return user != null && this.attendees.contains(user);
+        return user != null && this.attendees != null && this.attendees.contains(user);
     }
 }

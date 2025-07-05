@@ -446,7 +446,7 @@ const Home = () => {
         {authenticated && (
           <>
             <Row>
-              <Col md={4}>
+              <Col md={3}>
                 <EventCalendar
                   events={allEvents}
                   onDateSelect={handleDateSelect}
@@ -473,8 +473,8 @@ const Home = () => {
                   Find more groups
                 </Link>
               </Col>
-              <Col md={8}>
-                <div style={{ marginLeft: "20px" }}>
+              <Col md={7}>
+                <div style={{ marginLeft: "20px", marginRight: "10%" }}>
                   <div style={{ marginTop: "10px" }}>{eventCards}</div>
                 </div>
               </Col>
