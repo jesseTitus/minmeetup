@@ -126,6 +126,9 @@ const EventDetails = () => {
     try {
       const response = await fetch(`/api/events/${event.id}/attendees`, {
         method: "DELETE",
+        headers: {
+          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+        },
         credentials: "include",
       });
 
