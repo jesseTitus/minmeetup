@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -145,6 +146,91 @@ class EventController {
         eventRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/events/{id}/attendees")
+    @Transactional
+    ResponseEntity<?> joinEvent(@PathVariable("id") Long eventId,
+            @AuthenticationPrincipal OAuth2User principal) {
+        log.info("Request to attend event: {}", eventId);
+        Map<String, Object> details = principal.getAttributes();
+        String userId = details.get("sub").toString();
+        log.info("User ID: {}", userId);
+
+        // Find user
+        Optional<User> user = userRepository.findById(userId);
+        User currentUser = user.orElse(new User(userId,
+                details.get("name").toString(), details.get("email").toString()));
+
+        // Save the user if it's new
+        if (user.isEmpty()) {
+            currentUser = userRepository.save(currentUser);
+            log.info("Created new user: {}", currentUser.getName());
+        } else {
+            log.info("Found existing user: {}", currentUser.getName());
+        }
+
+        // Find the event
+        Optional<Event> eventOpt = eventRepository.findById(eventId);
+        if (eventOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Event event = eventOpt.get();
+        log.info("Found event: {}", event.getTitle());
+
+        // check if user is already attending
+        if (event.hasAttendee(userId)) {
+            log.info("User {} is already attending event {}", userId, eventId);
+            return ResponseEntity.ok().body("User is already attending this event");
+        }
+
+        // add user to event
+        event.addAttendee(currentUser);
+        Event result = eventRepository.save(event);
+        log.info("User {} successfully joined event {}", userId, eventId);
+
+        return ResponseEntity.ok().body(result);
+
+    }
+
+    @DeleteMapping("/events/{id}/attendees")
+    @Transactional
+    ResponseEntity<?> leaveEvent(@PathVariable("id") Long eventId,
+            @AuthenticationPrincipal OAuth2User principal) {
+        log.info("Request to leave event: {}", eventId);
+        Map<String, Object> details = principal.getAttributes();
+        String userId = details.get("sub").toString();
+
+        // Find the event
+        Optional<Event> eventOpt = eventRepository.findById(eventId);
+        if (eventOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Event event = eventOpt.get();
+
+        // Check if the user is actually attending this event
+        if (!event.hasAttendee(userId)) {
+            return ResponseEntity.badRequest().body("User is not attending this event");
+        }
+
+        // Find the user to remove
+        User userToRemove = event.getAttendees().stream()
+                .filter(u -> u.getId().equals(userId))
+                .findFirst()
+                .orElse(null);
+
+        // Remove the user from the event
+        if (userToRemove != null) {
+            event.removeAttendee(userToRemove);
+            eventRepository.save(event);
+            log.info("User {} successfully left event {}", userId, eventId);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+    // // Logic to remove user from event attendees
+    // }
 
     // DTO for event creation
     public static class EventRequest {

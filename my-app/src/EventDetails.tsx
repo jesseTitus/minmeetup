@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
 import AppNavbar from "./AppNavbar";
+import { useCookies } from "react-cookie";
 
 interface Event {
   id: number;
@@ -36,6 +37,7 @@ const EventDetails = () => {
   const [userEvents, setUserEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cookies] = useCookies(["XSRF-TOKEN"]);
 
   useEffect(() => {
     if (!id) return;
@@ -81,16 +83,21 @@ const EventDetails = () => {
 
   // Function to join an event
   const joinEvent = async (event: Event) => {
+    console.log("Joining event:", event.id);
     try {
-      const response = await fetch(`/api/events/${event.id}/attend`, {
+      const response = await fetch(`/api/events/${event.id}/attendees`, {
         method: "POST",
         headers: {
+          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
           "Content-Type": "application/json",
         },
         credentials: "include",
       });
 
+      console.log("Join response status:", response.status);
+
       if (response.ok) {
+        console.log("Successfully joined event");
         // Refresh the event data
         const updatedEvent = await fetch(`/api/events/${event.id}`, {
           credentials: "include",
@@ -103,22 +110,29 @@ const EventDetails = () => {
         }).then((res) => res.json());
         setUserEvents(updatedUserEvents);
       } else {
-        console.error("Failed to join event");
+        const errorText = await response.text();
+        console.error("Failed to join event:", response.status, errorText);
+        alert("Failed to join event. Please try again.");
       }
     } catch (error) {
       console.error("Error joining event:", error);
+      alert("Error joining event. Please try again.");
     }
   };
 
   // Function to leave an event
   const leaveEvent = async (event: Event) => {
+    console.log("Leaving event:", event.id);
     try {
-      const response = await fetch(`/api/events/${event.id}/attend`, {
+      const response = await fetch(`/api/events/${event.id}/attendees`, {
         method: "DELETE",
         credentials: "include",
       });
 
+      console.log("Leave response status:", response.status);
+
       if (response.ok) {
+        console.log("Successfully left event");
         // Refresh the event data
         const updatedEvent = await fetch(`/api/events/${event.id}`, {
           credentials: "include",
@@ -131,10 +145,13 @@ const EventDetails = () => {
         }).then((res) => res.json());
         setUserEvents(updatedUserEvents);
       } else {
-        console.error("Failed to leave event");
+        const errorText = await response.text();
+        console.error("Failed to leave event:", response.status, errorText);
+        alert("Failed to leave event. Please try again.");
       }
     } catch (error) {
       console.error("Error leaving event:", error);
+      alert("Error leaving event. Please try again.");
     }
   };
 

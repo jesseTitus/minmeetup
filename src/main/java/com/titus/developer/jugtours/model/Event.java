@@ -38,5 +38,24 @@ public class Event {
     private Group group;
 
     @ManyToMany
-    private Set<User> attendees;
+    private Set<User> attendees = new java.util.HashSet<>();
+
+    // helper methods for managing attendees
+    public void addAttendee(User user) {
+        if (user != null)
+            this.attendees.add(user);
+    }
+
+    public void removeAttendee(User user) {
+        if (user != null)
+            this.attendees.remove(user);
+    }
+
+    public boolean hasAttendee(String userId) {
+        return this.attendees.stream().anyMatch(user -> user.getId().equals(userId));
+    }
+
+    public boolean hasAttendee(User user) {
+        return user != null && this.attendees.contains(user);
+    }
 }
