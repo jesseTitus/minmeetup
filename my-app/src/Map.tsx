@@ -178,10 +178,12 @@ const Map: React.FC = () => {
             style={{
               position: "relative",
               width: "100%",
-              height: "400px",
+              maxWidth: "350px",
+              height: "350px",
               border: "2px solid #ccc",
               borderRadius: "8px",
               overflow: "hidden",
+              margin: "0 auto",
             }}
           >
             {/* Leaflet map container */}
@@ -215,38 +217,6 @@ const Map: React.FC = () => {
             information.
           </small>
         </div>
-
-        {events.length > 0 && (
-          <div className="mt-3">
-            <h6>Your Events:</h6>
-            <div style={{ maxHeight: "200px", overflowY: "auto" }}>
-              {events.map((event) => (
-                <div key={event.id} className="mb-2 p-2 border rounded">
-                  <strong>{event.title}</strong>
-                  <br />
-                  <small>
-                    {new Intl.DateTimeFormat("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }).format(new Date(event.date))}
-                  </small>
-                  <br />
-                  <small className="text-muted">{event.description}</small>
-                  {event.group && (
-                    <div>
-                      <small className="text-info">
-                        Group: {event.group.name}
-                      </small>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardBody>
     </Card>
   );

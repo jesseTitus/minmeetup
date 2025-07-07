@@ -21,6 +21,7 @@ interface Group {
   country?: string;
   postalCode?: string;
   events?: Event[];
+  isMember?: boolean;
 }
 
 const GroupList = () => {
@@ -44,10 +45,27 @@ const GroupList = () => {
         console.error("Error fetching user:", error);
       });
 
-    fetch("/api/groups", { credentials: "include" })
-      .then((response) => response.json())
-      .then((data) => {
-        setGroups(data);
+    // Fetch all groups and user's groups
+    Promise.all([
+      fetch("/api/groups/available", { credentials: "include" }).then(response => response.json()),
+      fetch("/api/groups", { credentials: "include" }).then(response => response.json())
+    ])
+      .then(([allGroups, userGroups]) => {
+        // Create a set of group IDs that the user is a member of
+        const userGroupIds = new Set(userGroups.map((group: Group) => group.id));
+        
+        // Mark groups as member or non-member and sort
+        const sortedGroups = allGroups.map((group: Group) => ({
+          ...group,
+          isMember: userGroupIds.has(group.id)
+        })).sort((a: Group, b: Group) => {
+          // Sort by membership status first (members first), then by name
+          if (a.isMember && !b.isMember) return -1;
+          if (!a.isMember && b.isMember) return 1;
+          return a.name.localeCompare(b.name);
+        });
+        
+        setGroups(sortedGroups);
         setLoading(false);
       })
       .catch((error) => {
@@ -82,6 +100,35 @@ const GroupList = () => {
     } catch (error) {
       console.error("Error leaving group:", error);
       alert("Error leaving group. Please try logging in again.");
+    }
+  };
+
+  const joinGroup = async (group: Group) => {
+    try {
+      const response = await fetch(`/api/groups/members/${group.id}`, {
+        method: "POST",
+        headers: {
+          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+          Accept: "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        window.location.href = "/oauth2/authorization/auth0";
+        return;
+      }
+
+      if (response.ok) {
+        // Refresh the page to update the button states
+        window.location.reload();
+      } else {
+        console.error("Failed to join group");
+        alert("Failed to join group. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error joining group:", error);
+      alert("Error joining group. Please try logging in again.");
     }
   };
 
@@ -192,23 +239,47 @@ const GroupList = () => {
 
             <div style={{ marginTop: "auto" }}>
               <div style={{ display: "flex", gap: "8px" }}>
-                <Button
+                {group.isMember ? (
+                  <>
+                                    <Button
                   size="sm"
                   color="primary"
                   tag={Link}
                   to={"/groups/" + group.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
                   style={{ flex: 1 }}
                 >
                   Manage
                 </Button>
-                <Button
+                                    <Button
                   size="sm"
                   color="danger"
-                  onClick={() => leaveGroup(group)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    leaveGroup(group);
+                  }}
                   style={{ flex: 1 }}
                 >
                   Leave
                 </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    color="success"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      joinGroup(group);
+                    }}
+                    style={{ flex: 1 }}
+                  >
+                    Join
+                  </Button>
+                )}
               </div>
             </div>
           </CardBody>
@@ -226,13 +297,13 @@ const GroupList = () => {
           <Button color="success" tag={Link} to="/groups/new">
             Create
           </Button>
-          <Button color="success" tag={Link} to="/groups/select">
-            Find more groups
-          </Button>
         </div>
         <h3 style={{ textAlign: "left", fontWeight: "bold" }}>
           Welcome, {getFirstName()} 👋
         </h3>
+        <p style={{ color: "#666", marginBottom: "20px" }}>
+          Groups you're a member of are shown first
+        </p>
 
         {groups.length === 0 ? (
           <div

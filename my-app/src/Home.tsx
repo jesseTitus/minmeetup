@@ -432,6 +432,85 @@ const Home = () => {
     );
   };
 
+  const renderYourEvents = () => {
+    if (!authenticated || allEvents.length === 0) {
+      return null;
+    }
+
+    // Show only first 3 events
+    const displayedEvents = allEvents.slice(0, 3);
+
+    return (
+      <div style={{ marginTop: "20px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "15px",
+          }}
+        >
+          <h4 style={{ margin: 0 }}>Your Events</h4>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          {displayedEvents.map((event) => (
+            <div
+              key={event.id}
+              style={{
+                padding: "15px",
+                backgroundColor: "white",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onClick={() =>
+                (window.location.href = `/events/${event.id}`)
+              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#f8f9fa";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "white";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <div style={{ fontWeight: "bold", marginBottom: "5px" }}>
+                {event.title}
+              </div>
+              <div style={{ fontSize: "12px", color: "#666", marginBottom: "5px" }}>
+                {new Intl.DateTimeFormat("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(event.date))}
+              </div>
+              <div style={{ fontSize: "12px", color: "#888" }}>
+                {event.description.length > 60
+                  ? `${event.description.substring(0, 60)}...`
+                  : event.description}
+              </div>
+              {event.group && (
+                <div style={{ fontSize: "11px", color: "#007bff", marginTop: "5px" }}>
+                  {event.group.name}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -454,7 +533,7 @@ const Home = () => {
                 <Map />
                 {renderGroupCards()}
                 <Link
-                  to="/groups/select"
+                  to="/groups"
                   style={{
                     textDecoration: "none",
                     color: "#007bff",
@@ -472,6 +551,7 @@ const Home = () => {
                 >
                   Find more groups
                 </Link>
+                {renderYourEvents()}
               </Col>
               <Col md={7}>
                 <div style={{ marginLeft: "20px", marginRight: "10%" }}>
