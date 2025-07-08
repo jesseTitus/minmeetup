@@ -140,10 +140,11 @@ const EventList = () => {
           const timezone = "EDT"; // You might want to make this dynamic based on user's timezone
           const formattedDateTime = `${day}, ${month} ${date} - ${time} ${timezone}`;
 
-          const truncatedDescription =
-            event.description.length > 32
-              ? event.description.substring(0, 32) + "..."
-              : event.description;
+          const truncatedDescription = event.description
+            ? (event.description.length > 32
+                ? event.description.substring(0, 32) + "..."
+                : event.description)
+            : "";
 
           const attendeeCount = event.attendees ? event.attendees.length : 0;
 
@@ -266,7 +267,7 @@ const EventList = () => {
             <p className="text-muted">
               {group.events?.length || 0} event(s) found
             </p>
-            <Button color="success" tag={Link} to={`/events/new?groupId=${groupId}`}>
+            <Button color="success" tag={Link} to={`/groups/${groupId}/events/new`}>
               Add New Event
             </Button>
           </CardBody>
@@ -288,7 +289,7 @@ const EventList = () => {
               }}
             >
               <p>No events found for this group</p>
-              <Button color="primary" tag={Link} to={`/events/new?groupId=${groupId}`}>
+              <Button color="primary" tag={Link} to={`/groups/${groupId}/events/new`}>
                 Create First Event
               </Button>
             </div>

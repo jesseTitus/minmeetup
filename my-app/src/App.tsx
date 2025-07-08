@@ -16,8 +16,9 @@ const App = () => {
         <Route path="/groups" element={<GroupList />} />
         <Route path="/groups/:id" element={<GroupEdit />} />
         <Route path="/groups/:groupId/events" element={<EventList />} />
-        <Route path="/events/:id" element={<EventDetails />} />
+        <Route path="/groups/:groupId/events/new" element={<EventEdit />} />
         <Route path="/events/:id/edit" element={<EventEdit />} />
+        <Route path="/events/:id" element={<EventDetails />} />
       </Routes>
     </Router>
   );

@@ -26,9 +26,8 @@ const EventEdit = () => {
   const [event, setEvent] = useState<Event>(initialFormState);
   const [groups, setGroups] = useState<Group[]>([]);
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id, groupId } = useParams();
   const [cookies] = useCookies(["XSRF-TOKEN"]);
-  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     // Fetch user's groups for the dropdown
@@ -48,13 +47,12 @@ const EventEdit = () => {
           console.error("Error fetching event:", error);
         });
     } else {
-      // If creating new event, check for groupId in URL parameters
-      const groupIdFromUrl = searchParams.get("groupId");
-      if (groupIdFromUrl) {
-        setEvent(prev => ({ ...prev, groupId: parseInt(groupIdFromUrl) }));
+      // If creating new event, use groupId from URL parameters
+      if (groupId) {
+        setEvent(prev => ({ ...prev, groupId: parseInt(groupId) }));
       }
     }
-  }, [id, setEvent, searchParams]);
+  }, [id, groupId, setEvent]);
 
   const handleChange = (
     eventChange: React.ChangeEvent<
@@ -70,27 +68,35 @@ const EventEdit = () => {
 
     // format the date to include seconds and timezone
     const formattedEvent = {
-      ...event,
+      title: event.title,
+      description: event.description,
       date: event.date ? `${event.date}:00Z` : event.date, // add sec and UTC
+      groupId: event.groupId,
     };
 
-    await fetch(`/api/events${event.id ? `/${event.id}` : ""}`, {
-      method: event.id ? "PUT" : "POST",
-      headers: {
-        "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formattedEvent),
-      credentials: "include",
-    })
-      .then(() => {
+    try {
+      const response = await fetch(`/api/events${event.id && event.id > 0 ? `/${event.id}` : ""}`, {
+        method: event.id && event.id > 0 ? "PUT" : "POST",
+        headers: {
+          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formattedEvent),
+        credentials: "include",
+      });
+
+      if (response.ok) {
         setEvent(initialFormState);
         navigate(`/groups/${event.groupId}/events`);
-      })
-      .catch((error) => {
-        console.error("Error saving event:", error);
-      });
+      } else {
+        console.error("Error saving event:", response.status, response.statusText);
+        alert("Failed to save event. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error saving event:", error);
+      alert("Error saving event. Please try again.");
+    }
   };
 
   const title = <h2>{event.id ? "Edit Event" : "Create Event"}</h2>;

@@ -49,9 +49,54 @@ class GroupController {
 
     @GetMapping("/groups/{id}")
     ResponseEntity<?> getGroup(@PathVariable Long id) {
-        Optional<Group> group = groupRepository.findById(id);
-        return group.map(response -> ResponseEntity.ok().body(response))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Optional<Group> groupOpt = groupRepository.findById(id);
+        if (groupOpt.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        
+        Group group = groupOpt.get();
+        Map<String, Object> groupWithEvents = new java.util.HashMap<>();
+        groupWithEvents.put("id", group.getId());
+        groupWithEvents.put("name", group.getName());
+        groupWithEvents.put("imageUrl", group.getImageUrl());
+        groupWithEvents.put("address", group.getAddress());
+        groupWithEvents.put("city", group.getCity());
+        groupWithEvents.put("stateOrProvince", group.getStateOrProvince());
+        groupWithEvents.put("country", group.getCountry());
+        groupWithEvents.put("postalCode", group.getPostalCode());
+
+        // Add events
+        if (group.getEvents() != null) {
+            Collection<Map<String, Object>> events = group.getEvents().stream()
+                    .map(event -> {
+                        Map<String, Object> eventInfo = new java.util.HashMap<>();
+                        eventInfo.put("id", event.getId());
+                        eventInfo.put("date", event.getDate());
+                        eventInfo.put("title", event.getTitle());
+                        eventInfo.put("description", event.getDescription());
+                        
+                        // Add attendees
+                        if (event.getAttendees() != null) {
+                            Collection<Map<String, Object>> attendees = event.getAttendees().stream()
+                                    .map(attendee -> {
+                                        Map<String, Object> attendeeInfo = new java.util.HashMap<>();
+                                        attendeeInfo.put("id", attendee.getId());
+                                        attendeeInfo.put("name", attendee.getName());
+                                        attendeeInfo.put("email", attendee.getEmail());
+                                        attendeeInfo.put("profilePictureUrl", attendee.getProfilePictureUrl());
+                                        return attendeeInfo;
+                                    })
+                                    .collect(java.util.stream.Collectors.toList());
+                            eventInfo.put("attendees", attendees);
+                        }
+                        
+                        return eventInfo;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            groupWithEvents.put("events", events);
+        }
+
+        return ResponseEntity.ok().body(groupWithEvents);
     }
 
     @PostMapping("/groups")

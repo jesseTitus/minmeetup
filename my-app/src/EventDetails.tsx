@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
 import AppNavbar from "./AppNavbar";
 import { useCookies } from "react-cookie";
@@ -201,12 +201,6 @@ const EventDetails = () => {
     <div>
       <AppNavbar />
       <Container>
-        <div style={{ marginTop: "20px", marginBottom: "20px" }}>
-          <Button color="secondary" onClick={() => navigate("/")}>
-            ← Back to Home
-          </Button>
-        </div>
-
         <Row>
           <Col md={8}>
             <Card>
@@ -241,9 +235,11 @@ const EventDetails = () => {
                   />
                   <div>
                     <h2 style={{ margin: 0, color: "#333" }}>{event.title}</h2>
-                    <p style={{ margin: "5px 0", color: "#666" }}>
-                      {event.group?.name}
-                    </p>
+                    {event.group && (
+                      <p style={{ fontSize: "14px", color: "#666", margin: "5px 0" }}>
+                        Group: {event.group.name}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -256,63 +252,78 @@ const EventDetails = () => {
                   </p>
                 </div>
 
-                                  <div style={{ marginBottom: "20px" }}>
-                    <h6>Attendees ({attendeeCount})</h6>
-                    {event.attendees && event.attendees.length > 0 && (
-                      <div>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
-                          {event.attendees.slice(0, 4).map((attendee) => {
-                            const nameParts = attendee.name.split(" ");
-                            const firstName = nameParts[0];
-                            const displayName = `${firstName}`;
+                <div style={{ marginBottom: "20px" }}>
+                  <h6>Attendees ({attendeeCount})</h6>
+                  {event.attendees && event.attendees.length > 0 && (
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "10px",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        {event.attendees.slice(0, 4).map((attendee) => {
+                          const nameParts = attendee.name.split(" ");
+                          const firstName = nameParts[0];
+                          const displayName = `${firstName}`;
 
-                            return (
-                              <div
-                                key={attendee.id}
+                          return (
+                            <div
+                              key={attendee.id}
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                backgroundColor: "white",
+                                border: "1px solid #ddd",
+                                borderRadius: "8px",
+                                padding: "8px",
+                                minWidth: "60px",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                              }}
+                            >
+                              <img
+                                src={
+                                  attendee.profilePictureUrl ||
+                                  `https://picsum.photos/40/40?random=${attendee.id}`
+                                }
+                                alt={displayName}
                                 style={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "center",
-                                  backgroundColor: "white",
-                                  border: "1px solid #ddd",
-                                  borderRadius: "8px",
-                                  padding: "8px",
-                                  minWidth: "60px",
-                                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                  width: "40px",
+                                  height: "40px",
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                  marginBottom: "4px",
+                                }}
+                                onError={(e) => {
+                                  e.currentTarget.src = `https://picsum.photos/40/40?random=${attendee.id}`;
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  textAlign: "center",
                                 }}
                               >
-                                <img
-                                  src={
-                                    attendee.profilePictureUrl ||
-                                    `https://picsum.photos/40/40?random=${attendee.id}`
-                                  }
-                                  alt={displayName}
-                                  style={{
-                                    width: "40px",
-                                    height: "40px",
-                                    borderRadius: "50%",
-                                    objectFit: "cover",
-                                    marginBottom: "4px",
-                                  }}
-                                  onError={(e) => {
-                                    e.currentTarget.src = `https://picsum.photos/40/40?random=${attendee.id}`;
-                                  }}
-                                />
-                                <span style={{ fontSize: "12px", textAlign: "center" }}>
-                                  {displayName}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {event.attendees.length > 4 && (
-                          <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
-                            + {event.attendees.length - 4} more attendee{event.attendees.length - 4 !== 1 ? "s" : ""}
-                          </p>
-                        )}
+                                {displayName}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                    )}
-                  </div>
+                      {event.attendees.length > 4 && (
+                        <p
+                          style={{ fontSize: "14px", color: "#666", margin: 0 }}
+                        >
+                          + {event.attendees.length - 4} more attendee
+                          {event.attendees.length - 4 !== 1 ? "s" : ""}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {event.group && (
                   <div style={{ marginBottom: "20px" }}>
@@ -337,16 +348,7 @@ const EventDetails = () => {
                   >
                     Edit Event
                   </Button>
-                  <Button
-                    size="sm"
-                    color="secondary"
-                    onClick={() =>
-                      navigate(`/groups/${event.group?.id}/events`)
-                    }
-                    style={{ marginRight: "10px" }}
-                  >
-                    View Group Events
-                  </Button>
+
                   <Button
                     size="sm"
                     color={isAttendee ? "danger" : "success"}
