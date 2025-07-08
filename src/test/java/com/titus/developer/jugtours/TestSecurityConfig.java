@@ -2,13 +2,20 @@ package com.titus.developer.jugtours;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
+import org.springframework.security.web.SecurityFilterChain;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Profile("test")
 @TestConfiguration
 public class TestSecurityConfig {
 
@@ -31,5 +38,19 @@ public class TestSecurityConfig {
                 .build();
 
         return new InMemoryClientRegistrationRepository(clientRegistration);
+    }
+
+    @Bean
+    public ClientRegistration auth0ClientRegistration(ClientRegistrationRepository clientRegistrationRepository) {
+        return clientRegistrationRepository.findByRegistrationId("auth0");
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests((authz) -> authz
+                        .anyRequest().permitAll())
+                .csrf((csrf) -> csrf.disable());
+        return http.build();
     }
 } 

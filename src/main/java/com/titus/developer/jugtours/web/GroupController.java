@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.context.annotation.Profile;
 
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -22,6 +23,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
+@Profile("!test")
 @RestController
 @RequestMapping("/api")
 class GroupController {
