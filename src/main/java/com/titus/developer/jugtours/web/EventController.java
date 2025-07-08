@@ -61,8 +61,24 @@ class EventController {
                 groupInfo.put("stateOrProvince", event.getGroup().getStateOrProvince());
                 groupInfo.put("country", event.getGroup().getCountry());
                 groupInfo.put("postalCode", event.getGroup().getPostalCode());
+                groupInfo.put("imageUrl", event.getGroup().getImageUrl());
 
                 eventWithGroup.put("group", groupInfo);
+            }
+
+            // Add attendees
+            if (event.getAttendees() != null) {
+                Collection<Map<String, Object>> attendees = event.getAttendees().stream()
+                        .map(attendee -> {
+                            Map<String, Object> attendeeInfo = new java.util.HashMap<>();
+                            attendeeInfo.put("id", attendee.getId());
+                            attendeeInfo.put("name", attendee.getName());
+                            attendeeInfo.put("email", attendee.getEmail());
+                            attendeeInfo.put("profilePictureUrl", attendee.getProfilePictureUrl());
+                            return attendeeInfo;
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+                eventWithGroup.put("attendees", attendees);
             }
 
             return eventWithGroup;
@@ -88,6 +104,7 @@ class EventController {
                 groupInfo.put("stateOrProvince", event.getGroup().getStateOrProvince());
                 groupInfo.put("country", event.getGroup().getCountry());
                 groupInfo.put("postalCode", event.getGroup().getPostalCode());
+                groupInfo.put("imageUrl", event.getGroup().getImageUrl());
 
                 eventWithGroup.put("group", groupInfo);
             }

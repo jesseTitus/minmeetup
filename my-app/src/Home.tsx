@@ -49,6 +49,8 @@ const Home = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [cookies] = useCookies(["XSRF-TOKEN"]);
   const [simpleGroups, setSimpleGroups] = useState<SimpleGroup[]>([]);
+  const [userEvents, setUserEvents] = useState<Event[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'user'>('all');
 
   useEffect(() => {
     setLoading(true);
@@ -94,21 +96,32 @@ const Home = () => {
         .catch((error) => {
           console.error("Error fetching simple groups:", error);
         });
+
+      // Fetch user's events (events they're attending)
+      fetch("/api/events", { credentials: "include" })
+        .then((response) => response.json())
+        .then((data) => setUserEvents(data))
+        .catch((error) => {
+          console.error("Error fetching user events:", error);
+        });
     }
   }, [authenticated, user]);
 
-  // Collect all events from all groups for the calendar
-  const allEvents = groups.flatMap((group) =>
+  // Get all events from groups
+  const allGroupEvents = groups.flatMap((group) =>
     (group.events || []).map((event) => ({
       ...event,
       group: group,
     }))
   );
 
+  // Choose which events to display based on active tab
+  const eventsToDisplay = activeTab === 'all' ? allGroupEvents : userEvents;
+
   // Filter events based on selected date
   const filteredEvents = (
     selectedDate
-      ? allEvents.filter((event) => {
+      ? eventsToDisplay.filter((event) => {
           const eventDate = new Date(event.date);
           // Set time to start of day for comparison
           const eventDateOnly = new Date(
@@ -123,7 +136,7 @@ const Home = () => {
           );
           return eventDateOnly >= selectedDateOnly;
         })
-      : allEvents
+      : eventsToDisplay
   ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   // Get user's first name
@@ -433,12 +446,12 @@ const Home = () => {
   };
 
   const renderYourEvents = () => {
-    if (!authenticated || allEvents.length === 0) {
+    if (!authenticated || userEvents.length === 0) {
       return null;
     }
 
     // Show only first 3 events
-    const displayedEvents = allEvents.slice(0, 3);
+    const displayedUserEvents = userEvents.slice(0, 3);
 
     return (
       <div style={{ marginTop: "20px" }}>
@@ -459,7 +472,7 @@ const Home = () => {
             gap: "10px",
           }}
         >
-          {displayedEvents.map((event) => (
+          {displayedUserEvents.map((event) => (
             <div
               key={event.id}
               style={{
@@ -470,9 +483,7 @@ const Home = () => {
                 cursor: "pointer",
                 transition: "all 0.2s ease",
               }}
-              onClick={() =>
-                (window.location.href = `/events/${event.id}`)
-              }
+              onClick={() => (window.location.href = `/events/${event.id}`)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#f8f9fa";
                 e.currentTarget.style.transform = "translateY(-2px)";
@@ -485,7 +496,9 @@ const Home = () => {
               <div style={{ fontWeight: "bold", marginBottom: "5px" }}>
                 {event.title}
               </div>
-              <div style={{ fontSize: "12px", color: "#666", marginBottom: "5px" }}>
+              <div
+                style={{ fontSize: "12px", color: "#666", marginBottom: "5px" }}
+              >
                 {new Intl.DateTimeFormat("en-US", {
                   year: "numeric",
                   month: "short",
@@ -500,7 +513,13 @@ const Home = () => {
                   : event.description}
               </div>
               {event.group && (
-                <div style={{ fontSize: "11px", color: "#007bff", marginTop: "5px" }}>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#007bff",
+                    marginTop: "5px",
+                  }}
+                >
                   {event.group.name}
                 </div>
               )}
@@ -527,7 +546,7 @@ const Home = () => {
             <Row>
               <Col md={3}>
                 <EventCalendar
-                  events={allEvents}
+                  events={eventsToDisplay}
                   onDateSelect={handleDateSelect}
                 />
                 <Map />
@@ -555,6 +574,47 @@ const Home = () => {
               </Col>
               <Col md={7}>
                 <div style={{ marginLeft: "20px", marginRight: "10%" }}>
+                  {/* Event Tabs */}
+                  <div style={{ marginBottom: "20px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        borderBottom: "2px solid #e9ecef",
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <button
+                        onClick={() => setActiveTab('all')}
+                        style={{
+                          padding: "10px 20px",
+                          border: "none",
+                          background: "none",
+                          cursor: "pointer",
+                          borderBottom: activeTab === 'all' ? "2px solid #007bff" : "2px solid transparent",
+                          color: activeTab === 'all' ? "#007bff" : "#666",
+                          fontWeight: activeTab === 'all' ? "bold" : "normal",
+                          fontSize: "16px",
+                        }}
+                      >
+                        All Events ({allGroupEvents.length})
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('user')}
+                        style={{
+                          padding: "10px 20px",
+                          border: "none",
+                          background: "none",
+                          cursor: "pointer",
+                          borderBottom: activeTab === 'user' ? "2px solid #007bff" : "2px solid transparent",
+                          color: activeTab === 'user' ? "#007bff" : "#666",
+                          fontWeight: activeTab === 'user' ? "bold" : "normal",
+                          fontSize: "16px",
+                        }}
+                      >
+                        Your Events ({userEvents.length})
+                      </button>
+                    </div>
+                  </div>
                   <div style={{ marginTop: "10px" }}>{eventCards}</div>
                 </div>
               </Col>
