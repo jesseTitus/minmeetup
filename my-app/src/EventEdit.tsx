@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button, Container, Form, FormGroup, Input, Label } from "reactstrap";
 import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
@@ -49,10 +49,10 @@ const EventEdit = () => {
     } else {
       // If creating new event, use groupId from URL parameters
       if (groupId) {
-        setEvent(prev => ({ ...prev, groupId: parseInt(groupId) }));
+        setEvent((prev) => ({ ...prev, groupId: parseInt(groupId) }));
       }
     }
-  }, [id, groupId, setEvent]);
+  }, [id, groupId]);
 
   const handleChange = (
     eventChange: React.ChangeEvent<
@@ -66,31 +66,46 @@ const EventEdit = () => {
   const handleSubmit = async (formEvent: React.FormEvent) => {
     formEvent.preventDefault();
 
+    // Get the groupId - prefer from event state, fallback to URL param
+    const finalGroupId = event.groupId || (groupId ? parseInt(groupId) : undefined);
+    
+    if (!finalGroupId) {
+      alert("Group ID is missing. Please try again.");
+      return;
+    }
+
     // format the date to include seconds and timezone
     const formattedEvent = {
       title: event.title,
       description: event.description,
       date: event.date ? `${event.date}:00Z` : event.date, // add sec and UTC
-      groupId: event.groupId,
+      groupId: finalGroupId,
     };
 
     try {
-      const response = await fetch(`/api/events${event.id && event.id > 0 ? `/${event.id}` : ""}`, {
-        method: event.id && event.id > 0 ? "PUT" : "POST",
-        headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formattedEvent),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `/api/events${event.id && event.id > 0 ? `/${event.id}` : ""}`,
+        {
+          method: event.id && event.id > 0 ? "PUT" : "POST",
+          headers: {
+            "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formattedEvent),
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         setEvent(initialFormState);
-        navigate(`/groups/${event.groupId}/events`);
+        navigate(`/groups/${finalGroupId}/events`);
       } else {
-        console.error("Error saving event:", response.status, response.statusText);
+        console.error(
+          "Error saving event:",
+          response.status,
+          response.statusText
+        );
         alert("Failed to save event. Please try again.");
       }
     } catch (error) {
@@ -141,22 +156,18 @@ const EventEdit = () => {
             />
           </FormGroup>
           <FormGroup>
-            <Label for="groupId">Group</Label>
-            <Input
-              type="select"
-              name="groupId"
-              id="groupId"
-              value={event.groupId || ""}
-              onChange={handleChange}
-              required
+            <Label>Group</Label>
+            <div
+              style={{
+                padding: "8px 12px",
+                border: "1px solid #ced4da",
+                borderRadius: "4px",
+                backgroundColor: "#f8f9fa",
+              }}
             >
-              <option value="">Select a group</option>
-              {groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
-            </Input>
+              {groups.find((g) => g.id === parseInt(groupId || "0"))?.name ||
+                "Loading..."}
+            </div>
           </FormGroup>
           <FormGroup>
             <Button color="primary" type="submit">
