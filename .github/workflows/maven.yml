@@ -19,6 +19,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+      AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
+      AUTH0_ISSUER_URI: ${{ secrets.AUTH0_ISSUER_URI }}
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 17
