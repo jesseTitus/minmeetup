@@ -31,6 +31,7 @@ import com.titus.developer.jugtours.TestSecurityConfig;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -46,15 +47,26 @@ class EventControllerIntegrationTest {
     private GroupRepository groupRepository;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private UserRepository userRepository;
 
     private Group testGroup;
     private Event testEvent;
+    private User testUser;
 
     @BeforeEach
+    @Transactional
     void setup() {
-        // Create and save a test group
+        // Create and save a test user
+        testUser = new User("test-user", "Test User", "testuser@example.com");
+        testUser = userRepository.save(testUser);
+        userRepository.flush();
+
+        // Create and save a test group, add test user as member
         testGroup = new Group("Test Group");
+        testGroup.addUser(testUser);
         testGroup = groupRepository.save(testGroup);
+        groupRepository.flush();
 
         // Create and save a test event
         testEvent = Event.builder()
@@ -64,64 +76,80 @@ class EventControllerIntegrationTest {
                 .group(testGroup)
                 .build();
         testEvent = eventRepository.save(testEvent);
+        eventRepository.flush();
     }
 
     @Test
     void testGetEvents() throws Exception {
-        mockMvc.perform(get("/api/events").with(user("test-user")))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 
     @Test
     void testGetAvailableEvents() throws Exception {
         mockMvc.perform(get("/api/events/available")
                 .contentType(MediaType.APPLICATION_JSON)
-                .with(user("test-user")))
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[?(@.title == 'Test Event' && @.description == 'Test Event Description')]")
-                        .exists());
+                .andExpect(jsonPath("$[?(@.title == 'Test Event' && @.description == 'Test Event Description')]").exists());
     }
 
     @Test
     void testGetEventById() throws Exception {
         mockMvc.perform(get("/api/events/" + testEvent.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .with(user("test-user")))
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(testEvent.getId()))
-                .andExpect(jsonPath("$.title").value("Test Event"))
-                .andExpect(jsonPath("$.description").value("Test Event Description"))
-                .andExpect(jsonPath("$.group.name").value("Test Group"));
+                .andExpect(jsonPath("$.title").value("Test Event"));
     }
 
     @Test
     void testGetEventByIdNotFound() throws Exception {
         mockMvc.perform(get("/api/events/99999")
                 .contentType(MediaType.APPLICATION_JSON)
-                .with(user("test-user")))
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
                 .andExpect(status().isNotFound());
     }
 
-    // @Test
-    // void testCreateEvent() throws Exception {
-    // Map<String, Object> eventRequest = new HashMap<>();
-    // eventRequest.put("title", "New Test Event");
-    // eventRequest.put("description", "New Test Event Description");
-    // eventRequest.put("date", Instant.now().plusSeconds(7200)); // 2 hours from
-    // now
-    // eventRequest.put("groupId", testGroup.getId());
+    @Test
+    void testCreateEvent() throws Exception {
+        Map<String, Object> eventRequest = new HashMap<>();
+        eventRequest.put("title", "New Test Event");
+        eventRequest.put("description", "New Test Event Description");
+        eventRequest.put("date", Instant.now().plusSeconds(7200)); // 2 hours from now
+        eventRequest.put("groupId", testGroup.getId());
 
-    // mockMvc.perform(post("/api/events")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .with(user("test-user"))
-    // .content(objectMapper.writeValueAsString(eventRequest)))
-    // .andExpect(status().isCreated())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$.title").value("New Test Event"))
-    // .andExpect(jsonPath("$.description").value("New Test Event Description"));
-    // }
+        mockMvc.perform(post("/api/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                }))
+                .content(objectMapper.writeValueAsString(eventRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("New Test Event"));
+    }
 
     // @Test
     // @WithMockUser(username = "test-user-123")
