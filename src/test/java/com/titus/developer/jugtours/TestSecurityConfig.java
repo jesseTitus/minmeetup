@@ -12,9 +12,6 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Profile("test")
 @TestConfiguration
 public class TestSecurityConfig {
@@ -53,4 +50,4 @@ public class TestSecurityConfig {
                 .csrf((csrf) -> csrf.disable());
         return http.build();
     }
-} 
+}

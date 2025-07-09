@@ -17,7 +17,6 @@ import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SimpleSavedRequest;
 
-@Profile("!test")
 @Configuration
 public class SecurityConfiguration {
 

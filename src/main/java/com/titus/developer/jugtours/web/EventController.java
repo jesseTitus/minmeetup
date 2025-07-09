@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
-@Profile("!test")
 @RestController
 @RequestMapping("/api")
 class EventController {

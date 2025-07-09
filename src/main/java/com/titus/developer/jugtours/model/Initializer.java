@@ -5,7 +5,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
@@ -33,7 +32,7 @@ class Initializer implements CommandLineRunner {
 
         Group djug = repository.findByName("Seattle JUG")
                 .orElseThrow(() -> new IllegalStateException("Seattle JUG group not found after initialization!"));
-        
+
         // Set location for Weekly Java Meetup at Grad Club, UWO
         djug.setAddress("Grad Club");
         djug.setCity("London");
@@ -43,10 +42,9 @@ class Initializer implements CommandLineRunner {
 
         // Create an example user who is a member of Seattle JUG and attends all events
         User exampleUser = new User(
-            "example-user-123",
-            "John Smith",
-            "john.smith@example.com"
-        );
+                "example-user-123",
+                "John Smith",
+                "john.smith@example.com");
         exampleUser.setProfilePictureUrl(imageService.generateRandomProfilePictureUrl("example-user-123"));
         userRepository.save(exampleUser);
 
@@ -63,17 +61,17 @@ class Initializer implements CommandLineRunner {
                     .date(eventDate.toInstant(ZoneOffset.UTC))
                     .group(djug)
                     .build();
-            
+
             // Add the example user as an attendee to each event
             event.addAttendee(exampleUser);
             events.add(event);
         }
 
         djug.setEvents(events);
-        
+
         // Add the example user to the Seattle JUG group
         djug.addUser(exampleUser);
-        
+
         // Save everything in one transaction
         repository.save(djug);
 
