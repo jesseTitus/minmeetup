@@ -4,35 +4,35 @@ A full-stack web application for managing Java User Group (JUG) events and tours
 
 ## Features
 
-### 🔐 Authentication & Security
+### Authentication & Security
 
 - OAuth2 authentication via Auth0
 - Secure session management
 - Protected API endpoints
 - Automatic login/logout handling
 
-### 👥 Group Management
+### Group Management
 
 - Browse available JUG groups
 - Join existing groups to your tour
 - Leave groups without deleting them
 - View group details and location information
 
-### 📅 Event Management
+### Event Management
 
 - Create and manage events for your groups
 - View all events on an interactive map
 - Event details with dates, descriptions, and locations
 - Filter events by group
 
-### 🗺️ Interactive Maps
+### Interactive Maps
 
 - OpenStreetMap integration with Leaflet.js
 - Visual representation of event locations
 - Custom markers for different event types
 - Points of Interest (POI) list with event details
 
-### 🎨 Modern UI
+### Modern UI
 
 - Responsive React frontend with Bootstrap
 - TypeScript for type safety
