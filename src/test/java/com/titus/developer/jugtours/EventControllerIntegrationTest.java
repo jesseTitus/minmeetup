@@ -40,6 +40,31 @@ class EventControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private EventRepository eventRepository;
+    @Autowired
+    private GroupRepository groupRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private Group testGroup;
+    private Event testEvent;
+
+    @BeforeEach
+    void setup() {
+        // Create and save a test group
+        testGroup = new Group("Test Group");
+        testGroup = groupRepository.save(testGroup);
+
+        // Create and save a test event
+        testEvent = Event.builder()
+                .title("Test Event")
+                .description("Test Event Description")
+                .date(Instant.now())
+                .group(testGroup)
+                .build();
+        testEvent = eventRepository.save(testEvent);
+    }
 
     @Test
     void testGetEvents() throws Exception {
@@ -47,37 +72,39 @@ class EventControllerIntegrationTest {
                 .andExpect(status().isOk());
     }
 
-    // @Test
-    // void testGetAvailableEvents() throws Exception {
-    // mockMvc.perform(get("/api/events/available")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$[0].title").value("Test Event"))
-    // .andExpect(jsonPath("$[0].description").value("Test Event Description"));
-    // }
+    @Test
+    void testGetAvailableEvents() throws Exception {
+        mockMvc.perform(get("/api/events/available")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[?(@.title == 'Test Event' && @.description == 'Test Event Description')]")
+                        .exists());
+    }
+
+    @Test
+    void testGetEventById() throws Exception {
+        mockMvc.perform(get("/api/events/" + testEvent.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(user("test-user")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(testEvent.getId()))
+                .andExpect(jsonPath("$.title").value("Test Event"))
+                .andExpect(jsonPath("$.description").value("Test Event Description"))
+                .andExpect(jsonPath("$.group.name").value("Test Group"));
+    }
+
+    @Test
+    void testGetEventByIdNotFound() throws Exception {
+        mockMvc.perform(get("/api/events/99999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(user("test-user")))
+                .andExpect(status().isNotFound());
+    }
 
     // @Test
-    // void testGetEventById() throws Exception {
-    // mockMvc.perform(get("/api/events/" + testEvent.getId())
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$.id").value(testEvent.getId()))
-    // .andExpect(jsonPath("$.title").value("Test Event"))
-    // .andExpect(jsonPath("$.description").value("Test Event Description"))
-    // .andExpect(jsonPath("$.group.name").value("Test Group"));
-    // }
-
-    // @Test
-    // void testGetEventByIdNotFound() throws Exception {
-    // mockMvc.perform(get("/api/events/99999")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isNotFound());
-    // }
-
-    // @Test
-    // @WithMockUser(username = "test-user-123")
     // void testCreateEvent() throws Exception {
     // Map<String, Object> eventRequest = new HashMap<>();
     // eventRequest.put("title", "New Test Event");
@@ -88,6 +115,7 @@ class EventControllerIntegrationTest {
 
     // mockMvc.perform(post("/api/events")
     // .contentType(MediaType.APPLICATION_JSON)
+    // .with(user("test-user"))
     // .content(objectMapper.writeValueAsString(eventRequest)))
     // .andExpect(status().isCreated())
     // .andExpect(content().contentType(MediaType.APPLICATION_JSON))

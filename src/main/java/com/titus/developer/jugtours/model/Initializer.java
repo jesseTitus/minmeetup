@@ -75,8 +75,7 @@ class Initializer implements CommandLineRunner {
         // Save everything in one transaction
         repository.save(djug);
 
-        System.out.println("Created example user: " + exampleUser.getName());
-        System.out.println("Example user is now a member of Seattle JUG and attending all events");
-        repository.findAll().forEach(System.out::println);
+        // System.out.println("Created example user: " + exampleUser.getName());
+        // repository.findAll().forEach(System.out::println);
     }
 }
