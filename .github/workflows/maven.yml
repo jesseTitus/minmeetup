@@ -10,13 +10,12 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main", "stable-base"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     env:
@@ -25,12 +24,12 @@ jobs:
       AUTH0_ISSUER_URI: ${{ secrets.AUTH0_ISSUER_URI }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
