@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
+@Profile("!test")
 @RestController
 @RequestMapping("/api")
 @Profile("!test")
