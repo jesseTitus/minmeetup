@@ -94,15 +94,22 @@ class EventControllerIntegrationTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 
-    // @Test
-    // void testGetAvailableEvents() throws Exception {
-    // mockMvc.perform(get("/api/events/available")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$[0].title").value("Test Event"))
-    // .andExpect(jsonPath("$[0].description").value("Test Event Description"));
-    // }
+    @Test
+    void testGetAvailableEvents() throws Exception {
+        mockMvc.perform(get("/api/events/available")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isNotEmpty())
+                .andExpect(jsonPath("$[?(@.title == 'Test Event')]").exists())
+                .andExpect(jsonPath("$[?(@.title == 'Test Event')].description").value("Test Event Description"));
+    }
 
     @Test
     void testGetEventById() throws Exception {
