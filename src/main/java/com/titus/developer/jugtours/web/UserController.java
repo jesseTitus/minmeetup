@@ -1,5 +1,6 @@
 package com.titus.developer.jugtours.web;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
+@Profile("!test")
 @RestController
 @RequestMapping("/api")
 public class UserController {
