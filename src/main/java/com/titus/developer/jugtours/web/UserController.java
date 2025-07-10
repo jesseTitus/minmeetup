@@ -20,7 +20,6 @@ import java.util.Map;
 @Profile("!test")
 @RestController
 @RequestMapping("/api")
-@Profile("!test")
 public class UserController {
     private final ClientRegistration registration;
 
