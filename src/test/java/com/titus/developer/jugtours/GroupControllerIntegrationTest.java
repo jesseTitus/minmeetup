@@ -109,28 +109,32 @@ class GroupControllerIntegrationTest {
                 .andExpect(jsonPath("$.address").value("123 Test St"));
     }
 
-    // @Test
-    // void testGetGroupByIdNotFound() throws Exception {
-    // mockMvc.perform(get("/api/groups/99999")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isNotFound());
-    // }
+    @Test
+    void testGetGroupByIdNotFound() throws Exception {
+        mockMvc.perform(get("/api/groups/99999")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
 
-    // @Test
-    // @WithMockUser(username = "test-user-123")
-    // void testCreateGroup() throws Exception {
-    // Group newGroup = new Group("New Test Group");
-    // newGroup.setAddress("456 New St");
-    // newGroup.setCity("New City");
+    @Test
+    void testCreateGroup() throws Exception {
+        Group newGroup = new Group("New Test Group");
+        newGroup.setAddress("456 New St");
+        newGroup.setCity("New City");
 
-    // mockMvc.perform(post("/api/groups")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(newGroup)))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$.name").value("New Test Group"))
-    // .andExpect(jsonPath("$.address").value("456 New St"));
-    // }
+        mockMvc.perform(post("/api/groups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                }))
+                .content(objectMapper.writeValueAsString(newGroup)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.name").value("New Test Group"))
+                .andExpect(jsonPath("$.address").value("456 New St"));
+    }
 
     // @Test
     // void testJoinGroup() throws Exception {
