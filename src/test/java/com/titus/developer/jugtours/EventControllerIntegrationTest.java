@@ -224,32 +224,39 @@ class EventControllerIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    // @Test
-    // @WithMockUser(username = "test-user-123")
-    // void testLeaveEvent() throws Exception {
-    // // Add user as attendee first
-    // testEvent.addAttendee(testUser);
-    // eventRepository.save(testEvent);
+    @Test
+    void testLeaveEvent() throws Exception {
+        // Add user as attendee first
+        testEvent.addAttendee(testUser);
+        eventRepository.save(testEvent);
 
-    // mockMvc.perform(delete("/api/events/" + testEvent.getId() + "/attendees")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/events/" + testEvent.getId() + "/attendees")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk());
 
-    // // Verify user was removed as attendee
-    // Event updatedEvent =
-    // eventRepository.findById(testEvent.getId()).orElse(null);
-    // assert updatedEvent != null;
-    // assert !updatedEvent.hasAttendee("test-user-123");
-    // }
+        // Verify user was removed as attendee
+        Event updatedEvent = eventRepository.findById(testEvent.getId()).orElse(null);
+        assert updatedEvent != null;
+        assert !updatedEvent.hasAttendee("test-user-123");
+    }
 
-    // @Test
-    // @WithMockUser(username = "test-user-123")
-    // void testLeaveEventNotAttending() throws Exception {
-    // mockMvc.perform(delete("/api/events/" + testEvent.getId() + "/attendees")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(content().string("User is not attending this event"));
-    // }
+    @Test
+    void testLeaveEventNotAttending() throws Exception {
+        mockMvc.perform(delete("/api/events/" + testEvent.getId() + "/attendees")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("User is not attending this event"));
+    }
 
     // @Test
     // void testUpdateEvent() throws Exception {
