@@ -8,7 +8,7 @@ import com.titus.developer.jugtours.model.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -23,58 +23,63 @@ import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 
-@SpringBootTest
-@AutoConfigureWebMvc
+@SpringBootTest(properties = {
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration"
+})
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
 class GroupControllerIntegrationTest {
 
     @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
     private WebApplicationContext webApplicationContext;
-
     @Autowired
     private GroupRepository groupRepository;
-
     @Autowired
     private UserRepository userRepository;
 
-    private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
     private User testUser;
     private Group testGroup;
 
-    // @BeforeEach
-    // void setUp() {
-    // mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    // objectMapper = new ObjectMapper();
+    @BeforeEach
+    void setUp() {
+        // Create and save a test user
+        testUser = new User("test-user", "Test User", "testuser@example.com");
+        testUser = userRepository.save(testUser);
+        userRepository.flush();
 
-    // // Create test user
-    // testUser = new User("test-user-123", "Test User", "test@example.com");
-    // testUser = userRepository.save(testUser);
+        // Create and save a test group
+        testGroup = new Group("Test Group");
+        testGroup.setAddress("123 Test St");
+        testGroup.setCity("Test City");
+        testGroup.setCountry("Test Country");
+        testGroup = groupRepository.save(testGroup);
+    }
 
-    // // Create test group
-    // testGroup = new Group("Test Group");
-    // testGroup.setAddress("123 Test St");
-    // testGroup.setCity("Test City");
-    // testGroup.setCountry("Test Country");
-    // testGroup = groupRepository.save(testGroup);
-    // }
+    @Test
+    void testGetGroups() throws Exception {
+        // Add user to group
+        testGroup.addUser(testUser);
+        groupRepository.save(testGroup);
 
-    // @Test
-    // @WithMockUser(username = "test-user-123")
-    // void testGetGroups() throws Exception {
-    // // Add user to group
-    // testGroup.addUser(testUser);
-    // groupRepository.save(testGroup);
-
-    // mockMvc.perform(get("/api/groups")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$[0].name").value("Test Group"))
-    // .andExpect(jsonPath("$[0].address").value("123 Test St"));
-    // }
+        mockMvc.perform(get("/api/groups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].name").value("Test Group"))
+                .andExpect(jsonPath("$[0].address").value("123 Test St"));
+    }
 
     // @Test
     // void testGetAvailableGroups() throws Exception {
@@ -120,7 +125,6 @@ class GroupControllerIntegrationTest {
     // }
 
     // @Test
-    // @WithMockUser(username = "test-user-123")
     // void testJoinGroup() throws Exception {
     // mockMvc.perform(post("/api/groups/members/" + testGroup.getId())
     // .contentType(MediaType.APPLICATION_JSON))
@@ -136,7 +140,6 @@ class GroupControllerIntegrationTest {
     // }
 
     // @Test
-    // @WithMockUser(username = "test-user-123")
     // void testJoinGroupAlreadyMember() throws Exception {
     // // Add user to group first
     // testGroup.addUser(testUser);
@@ -149,7 +152,6 @@ class GroupControllerIntegrationTest {
     // }
 
     // @Test
-    // @WithMockUser(username = "test-user-123")
     // void testJoinGroupNotFound() throws Exception {
     // mockMvc.perform(post("/api/groups/members/99999")
     // .contentType(MediaType.APPLICATION_JSON))
@@ -157,7 +159,6 @@ class GroupControllerIntegrationTest {
     // }
 
     // @Test
-    // @WithMockUser(username = "test-user-123")
     // void testLeaveGroup() throws Exception {
     // // Add user to group first
     // testGroup.addUser(testUser);
@@ -175,7 +176,6 @@ class GroupControllerIntegrationTest {
     // }
 
     // @Test
-    // @WithMockUser(username = "test-user-123")
     // void testLeaveGroupNotMember() throws Exception {
     // mockMvc.perform(delete("/api/groups/members/" + testGroup.getId())
     // .contentType(MediaType.APPLICATION_JSON))
@@ -184,7 +184,6 @@ class GroupControllerIntegrationTest {
     // }
 
     // @Test
-    // @WithMockUser(username = "test-user-123")
     // void testUpdateGroup() throws Exception {
     // Group updateData = new Group("Updated Group Name");
     // updateData.setAddress("789 Updated St");
