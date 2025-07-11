@@ -81,25 +81,33 @@ class GroupControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].address").value("123 Test St"));
     }
 
-    // @Test
-    // void testGetAvailableGroups() throws Exception {
-    // mockMvc.perform(get("/api/groups/available")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$[0].name").value("Test Group"));
-    // }
+    @Test
+    void testGetAvailableGroups() throws Exception {
+        mockMvc.perform(get("/api/groups/available")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isNotEmpty())
+                .andExpect(jsonPath("$[?(@.name == 'Test Group')]").exists())
+                .andExpect(jsonPath("$[?(@.name == 'Test Group')].address").value("123 Test St"));
+    }
 
-    // @Test
-    // void testGetGroupById() throws Exception {
-    // mockMvc.perform(get("/api/groups/" + testGroup.getId())
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$.id").value(testGroup.getId()))
-    // .andExpect(jsonPath("$.name").value("Test Group"))
-    // .andExpect(jsonPath("$.address").value("123 Test St"));
-    // }
+    @Test
+    void testGetGroupById() throws Exception {
+        mockMvc.perform(get("/api/groups/" + testGroup.getId())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(testGroup.getId()))
+                .andExpect(jsonPath("$.name").value("Test Group"))
+                .andExpect(jsonPath("$.address").value("123 Test St"));
+    }
 
     // @Test
     // void testGetGroupByIdNotFound() throws Exception {
