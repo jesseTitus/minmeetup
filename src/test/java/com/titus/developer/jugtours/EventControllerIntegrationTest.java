@@ -195,26 +195,34 @@ class EventControllerIntegrationTest {
         assert updatedEvent.hasAttendee("test-user");
     }
 
-    // @Test
-    // @WithMockUser(username = "test-user-123")
-    // void testJoinEventAlreadyAttending() throws Exception {
-    // // Add user as attendee first
-    // testEvent.addAttendee(testUser);
-    // eventRepository.save(testEvent);
+    @Test
+    void testJoinEventAlreadyAttending() throws Exception {
+        // Add user as attendee first
+        testEvent.addAttendee(testUser);
+        eventRepository.save(testEvent);
 
-    // mockMvc.perform(post("/api/events/" + testEvent.getId() + "/attendees")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().string("User is already attending this event"));
-    // }
+        mockMvc.perform(post("/api/events/" + testEvent.getId() + "/attendees")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().string("User is already attending this event"));
+    }
 
-    // @Test
-    // @WithMockUser(username = "test-user-123")
-    // void testJoinEventNotFound() throws Exception {
-    // mockMvc.perform(post("/api/events/99999/attendees")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isNotFound());
-    // }
+    @Test
+    void testJoinEventNotFound() throws Exception {
+        mockMvc.perform(post("/api/events/99999/attendees")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isNotFound());
+    }
 
     // @Test
     // @WithMockUser(username = "test-user-123")
