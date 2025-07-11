@@ -258,31 +258,36 @@ class EventControllerIntegrationTest {
                 .andExpect(content().string("User is not attending this event"));
     }
 
-    // @Test
-    // void testUpdateEvent() throws Exception {
-    // Event updateData = Event.builder()
-    // .title("Updated Event Title")
-    // .description("Updated Event Description")
-    // .date(Instant.now().plusSeconds(10800)) // 3 hours from now
-    // .group(testGroup)
-    // .build();
+    @Test
+    void testUpdateEvent() throws Exception {
+        Event updateData = Event.builder()
+                .title("Updated Event Title")
+                .description("Updated Event Description")
+                .date(Instant.now().plusSeconds(10800)) // 3 hours from now
+                .group(testGroup)
+                .build();
 
-    // mockMvc.perform(put("/api/events/" + testEvent.getId())
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(updateData)))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$.title").value("Updated Event Title"))
-    // .andExpect(jsonPath("$.description").value("Updated Event Description"));
-    // }
+        mockMvc.perform(put("/api/events/" + testEvent.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                }))
+                .content(objectMapper.writeValueAsString(updateData)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.title").value("Updated Event Title"))
+                .andExpect(jsonPath("$.description").value("Updated Event Description"));
+    }
 
-    // @Test
-    // void testDeleteEvent() throws Exception {
-    // mockMvc.perform(delete("/api/events/" + testEvent.getId())
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk());
+    @Test
+    void testDeleteEvent() throws Exception {
+        mockMvc.perform(delete("/api/events/" + testEvent.getId())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
 
-    // // Verify event was deleted
-    // assert eventRepository.findById(testEvent.getId()).isEmpty();
-    // }
+        // Verify event was deleted
+        assert eventRepository.findById(testEvent.getId()).isEmpty();
+    }
 }
