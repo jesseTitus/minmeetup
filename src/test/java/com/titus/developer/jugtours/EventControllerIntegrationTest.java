@@ -176,21 +176,24 @@ class EventControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // @Test
-    // @WithMockUser(username = "test-user-123")
-    // void testJoinEvent() throws Exception {
-    // mockMvc.perform(post("/api/events/" + testEvent.getId() + "/attendees")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$.title").value("Test Event"));
+    @Test
+    void testJoinEvent() throws Exception {
+        mockMvc.perform(post("/api/events/" + testEvent.getId() + "/attendees")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.title").value("Test Event"));
 
-    // // Verify user was added as attendee
-    // Event updatedEvent =
-    // eventRepository.findById(testEvent.getId()).orElse(null);
-    // assert updatedEvent != null;
-    // assert updatedEvent.hasAttendee("test-user-123");
-    // }
+        // Verify user was added as attendee
+        Event updatedEvent = eventRepository.findById(testEvent.getId()).orElse(null);
+        assert updatedEvent != null;
+        assert updatedEvent.hasAttendee("test-user");
+    }
 
     // @Test
     // @WithMockUser(username = "test-user-123")
