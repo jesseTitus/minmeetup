@@ -130,7 +130,7 @@ class GroupControllerIntegrationTest {
                     attrs.put("email", "testuser@example.com");
                 }))
                 .content(objectMapper.writeValueAsString(newGroup)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("New Test Group"))
                 .andExpect(jsonPath("$.address").value("456 New St"));
