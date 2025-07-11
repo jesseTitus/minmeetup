@@ -156,20 +156,25 @@ class EventControllerIntegrationTest {
                 .andExpect(jsonPath("$.title").value("New Test Event"));
     }
 
-    // @Test
+    @Test
     // @WithMockUser(username = "test-user-123")
-    // void testCreateEventWithInvalidGroup() throws Exception {
-    // Map<String, Object> eventRequest = new HashMap<>();
-    // eventRequest.put("title", "New Test Event");
-    // eventRequest.put("description", "New Test Event Description");
-    // eventRequest.put("date", Instant.now().plusSeconds(7200));
-    // eventRequest.put("groupId", 99999L); // Non-existent group
+    void testCreateEventWithInvalidGroup() throws Exception {
+        Map<String, Object> eventRequest = new HashMap<>();
+        eventRequest.put("title", "New Test Event");
+        eventRequest.put("description", "New Test Event Description");
+        eventRequest.put("date", Instant.now().plusSeconds(7200));
+        eventRequest.put("groupId", 99999L); // Non-existent group
 
-    // mockMvc.perform(post("/api/events")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(eventRequest)))
-    // .andExpect(status().isBadRequest());
-    // }
+        mockMvc.perform(post("/api/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                }))
+                .content(objectMapper.writeValueAsString(eventRequest)))
+                .andExpect(status().isBadRequest());
+    }
 
     // @Test
     // @WithMockUser(username = "test-user-123")
