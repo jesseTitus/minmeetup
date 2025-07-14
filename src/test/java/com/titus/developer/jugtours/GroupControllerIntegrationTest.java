@@ -136,64 +136,87 @@ class GroupControllerIntegrationTest {
                 .andExpect(jsonPath("$.address").value("456 New St"));
     }
 
-    // @Test
-    // void testJoinGroup() throws Exception {
-    // mockMvc.perform(post("/api/groups/members/" + testGroup.getId())
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$.name").value("Test Group"));
+    @Test
+    void testJoinGroup() throws Exception {
+        mockMvc.perform(post("/api/groups/members/" + testGroup.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.name").value("Test Group"));
 
-    // // Verify user was added to group
-    // Group updatedGroup =
-    // groupRepository.findById(testGroup.getId()).orElse(null);
-    // assert updatedGroup != null;
-    // assert updatedGroup.hasUser("test-user-123");
-    // }
+        // Verify user was added to group
+        Group updatedGroup = groupRepository.findById(testGroup.getId()).orElse(null);
+        assert updatedGroup != null;
+        assert updatedGroup.hasUser("test-user");
+    }
 
-    // @Test
-    // void testJoinGroupAlreadyMember() throws Exception {
-    // // Add user to group first
-    // testGroup.addUser(testUser);
-    // groupRepository.save(testGroup);
+    @Test
+    void testJoinGroupAlreadyMember() throws Exception {
+        // Add user to group first
+        testGroup.addUser(testUser);
+        groupRepository.save(testGroup);
 
-    // mockMvc.perform(post("/api/groups/members/" + testGroup.getId())
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk())
-    // .andExpect(content().string("User is already a member of this group"));
-    // }
+        mockMvc.perform(post("/api/groups/members/" + testGroup.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().string("User is already a member of this group"));
+    }
 
-    // @Test
-    // void testJoinGroupNotFound() throws Exception {
-    // mockMvc.perform(post("/api/groups/members/99999")
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isNotFound());
-    // }
+    @Test
+    void testJoinGroupNotFound() throws Exception {
+        mockMvc.perform(post("/api/groups/members/99999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isNotFound());
+    }
 
-    // @Test
-    // void testLeaveGroup() throws Exception {
-    // // Add user to group first
-    // testGroup.addUser(testUser);
-    // groupRepository.save(testGroup);
+    @Test
+    void testLeaveGroup() throws Exception {
+        // Add user to group first
+        testGroup.addUser(testUser);
+        groupRepository.save(testGroup);
 
-    // mockMvc.perform(delete("/api/groups/members/" + testGroup.getId())
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/groups/members/" + testGroup.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk());
 
-    // // Verify user was removed from group
-    // Group updatedGroup =
-    // groupRepository.findById(testGroup.getId()).orElse(null);
-    // assert updatedGroup != null;
-    // assert !updatedGroup.hasUser("test-user-123");
-    // }
+        // Verify user was removed from group
+        Group updatedGroup = groupRepository.findById(testGroup.getId()).orElse(null);
+        assert updatedGroup != null;
+        assert !updatedGroup.hasUser("test-user");
+    }
 
-    // @Test
-    // void testLeaveGroupNotMember() throws Exception {
-    // mockMvc.perform(delete("/api/groups/members/" + testGroup.getId())
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(content().string("User is not a member of this group"));
-    // }
+    @Test
+    void testLeaveGroupNotMember() throws Exception {
+        mockMvc.perform(delete("/api/groups/members/" + testGroup.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("User is not a member of this group"));
+    }
 
     // @Test
     // void testUpdateGroup() throws Exception {

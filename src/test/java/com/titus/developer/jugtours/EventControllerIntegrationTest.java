@@ -242,7 +242,7 @@ class EventControllerIntegrationTest {
         // Verify user was removed as attendee
         Event updatedEvent = eventRepository.findById(testEvent.getId()).orElse(null);
         assert updatedEvent != null;
-        assert !updatedEvent.hasAttendee("test-user-123");
+        assert !updatedEvent.hasAttendee("test-user");
     }
 
     @Test
