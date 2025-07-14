@@ -218,28 +218,28 @@ class GroupControllerIntegrationTest {
                 .andExpect(content().string("User is not a member of this group"));
     }
 
-    // @Test
-    // void testUpdateGroup() throws Exception {
-    // Group updateData = new Group("Updated Group Name");
-    // updateData.setAddress("789 Updated St");
-    // updateData.setCity("Updated City");
+    @Test
+    void testUpdateGroup() throws Exception {
+        Group updateData = new Group("Updated Group Name");
+        updateData.setAddress("789 Updated St");
+        updateData.setCity("Updated City");
 
-    // mockMvc.perform(put("/api/groups/" + testGroup.getId())
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(updateData)))
-    // .andExpect(status().isOk())
-    // .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(jsonPath("$.name").value("Updated Group Name"))
-    // .andExpect(jsonPath("$.address").value("789 Updated St"));
-    // }
+        mockMvc.perform(put("/api/groups/" + testGroup.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateData)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.name").value("Updated Group Name"))
+                .andExpect(jsonPath("$.address").value("789 Updated St"));
+    }
 
-    // @Test
-    // void testDeleteGroup() throws Exception {
-    // mockMvc.perform(delete("/api/groups/" + testGroup.getId())
-    // .contentType(MediaType.APPLICATION_JSON))
-    // .andExpect(status().isOk());
+    @Test
+    void testDeleteGroup() throws Exception {
+        mockMvc.perform(delete("/api/groups/" + testGroup.getId())
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
 
-    // // Verify group was deleted
-    // assert groupRepository.findById(testGroup.getId()).isEmpty();
-    // }
+        // Verify group was deleted
+        assert groupRepository.findById(testGroup.getId()).isEmpty();
+    }
 }
