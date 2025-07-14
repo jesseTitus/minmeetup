@@ -39,6 +39,7 @@ const EventDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cookies] = useCookies(["XSRF-TOKEN"]);
+  const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -236,7 +237,13 @@ const EventDetails = () => {
                   <div>
                     <h2 style={{ margin: 0, color: "#333" }}>{event.title}</h2>
                     {event.group && (
-                      <p style={{ fontSize: "14px", color: "#666", margin: "5px 0" }}>
+                      <p
+                        style={{
+                          fontSize: "14px",
+                          color: "#666",
+                          margin: "5px 0",
+                        }}
+                      >
                         Group: {event.group.name}
                       </p>
                     )}
@@ -338,7 +345,6 @@ const EventDetails = () => {
                     </p>
                   </div>
                 )}
-
                 <div style={{ marginTop: "30px" }}>
                   <Button
                     size="sm"

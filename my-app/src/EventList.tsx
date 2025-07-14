@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Button,
-  Container,
-  Card,
-  CardBody,
-  CardTitle,
-} from "reactstrap";
+import { Button, Container, Card, CardBody, CardTitle } from "reactstrap";
 import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -41,6 +35,7 @@ const EventList = () => {
   const [group, setGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(false);
   const { groupId } = useParams<{ groupId: string }>();
+  const [isMember, setIsMember] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,19 +43,31 @@ const EventList = () => {
 
     setLoading(true);
 
-    fetch(`/api/groups/${groupId}`, { credentials: "include" })
-      .then((response) => {
-        if (response.status === 401 || response.status === 403) {
+    // Fetch group details and check membership in parallel
+    Promise.all([
+      fetch(`/api/groups/${groupId}`, { credentials: "include" }),
+      fetch("/api/groups", { credentials: "include" }),
+    ])
+      .then(([groupResponse, userGroupsResponse]) => {
+        if (groupResponse.status === 401 || groupResponse.status === 403) {
           window.location.href = "/oauth2/authorization/auth0";
-          return;
+          return null;
         }
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (!groupResponse.ok) {
+          throw new Error(`HTTP error! status: ${groupResponse.status}`);
         }
-        return response.json();
+
+        return Promise.all([groupResponse.json(), userGroupsResponse.json()]);
       })
-      .then((data) => {
-        setGroup(data);
+      .then((result) => {
+        if (result) {
+          const [groupData, userGroups] = result;
+          setGroup(groupData);
+          // Check if current group is in user's groups
+          setIsMember(
+            userGroups.some((group: Group) => group.id === parseInt(groupId!))
+          );
+        }
         setLoading(false);
       })
       .catch((error) => {
@@ -141,9 +148,9 @@ const EventList = () => {
           const formattedDateTime = `${day}, ${month} ${date} - ${time} ${timezone}`;
 
           const truncatedDescription = event.description
-            ? (event.description.length > 32
-                ? event.description.substring(0, 32) + "..."
-                : event.description)
+            ? event.description.length > 32
+              ? event.description.substring(0, 32) + "..."
+              : event.description
             : "";
 
           const attendeeCount = event.attendees ? event.attendees.length : 0;
@@ -267,12 +274,18 @@ const EventList = () => {
             <p className="text-muted">
               {group.events?.length || 0} event(s) found
             </p>
-            <Button color="success" tag={Link} to={`/groups/${groupId}/events/new`}>
-              Add New Event
-            </Button>
+            {isMember ? (
+              <Button
+                color="success"
+                tag={Link}
+                to={`/groups/${groupId}/events/new`}
+              >
+                Add New Event
+              </Button>
+            ) : null}
           </CardBody>
         </Card>
-        
+
         {/* Event Cards */}
         <div style={{ marginTop: "20px" }}>
           {group.events && group.events.length > 0 ? (
@@ -289,9 +302,16 @@ const EventList = () => {
               }}
             >
               <p>No events found for this group</p>
-              <Button color="primary" tag={Link} to={`/groups/${groupId}/events/new`}>
-                Create First Event
-              </Button>
+
+              {isMember && (
+                <Button
+                  color="primary"
+                  tag={Link}
+                  to={`/groups/${groupId}/events/new`}
+                >
+                  Create First Event
+                </Button>
+              )}
             </div>
           )}
         </div>
