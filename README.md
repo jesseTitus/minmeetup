@@ -1,6 +1,6 @@
 # JUG Tours
 
-A full-stack web application for managing Java User Group (JUG) events and tours. Users can discover JUG groups, join them, and manage events with interactive maps.
+A full-stack web application for managing Java User Group (JUG) events and tours. Users can discover JUG groups, join them, and manage events.
 
 ## Features
 
@@ -21,16 +21,8 @@ A full-stack web application for managing Java User Group (JUG) events and tours
 ### Event Management
 
 - Create and manage events for your groups
-- View all events on an interactive map
 - Event details with dates, descriptions, and locations
 - Filter events by group
-
-### Interactive Maps
-
-- OpenStreetMap integration with Leaflet.js
-- Visual representation of event locations
-- Custom markers for different event types
-- Points of Interest (POI) list with event details
 
 ### Modern UI
 
@@ -58,7 +50,6 @@ A full-stack web application for managing Java User Group (JUG) events and tours
 - **Bootstrap 5** - CSS framework
 - **Reactstrap** - Bootstrap components for React
 - **React Router** - Client-side routing
-- **Leaflet.js** - Interactive maps
 - **React Cookie** - Cookie management
 
 ### Authentication

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
 import AppNavbar from "./AppNavbar";
 import { useCookies } from "react-cookie";
@@ -39,7 +39,6 @@ const EventDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cookies] = useCookies(["XSRF-TOKEN"]);
-  const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
     if (!id) return;

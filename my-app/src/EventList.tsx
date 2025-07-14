@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Container, Card, CardBody, CardTitle } from "reactstrap";
-import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 import { Link, useNavigate, useParams } from "react-router-dom";
 

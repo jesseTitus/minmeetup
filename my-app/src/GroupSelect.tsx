@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Container,
@@ -9,7 +9,7 @@ import {
 } from "reactstrap";
 import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 interface Event {
   id: number;
@@ -35,7 +35,6 @@ const GroupSelect = () => {
   const [loading, setLoading] = useState(false);
   const [processingGroups, setProcessingGroups] = useState<Set<number>>(new Set());
   const [cookies] = useCookies(["XSRF-TOKEN"]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);

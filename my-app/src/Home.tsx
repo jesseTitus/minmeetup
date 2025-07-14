@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import AppNavbar from "./AppNavbar";
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Container, Table, Row, Col } from "reactstrap";
-import { useCookies } from "react-cookie";
-import Map from "./Map";
+import { Button, Container, Row, Col } from "reactstrap";
 import EventCalendar from "./EventCalendar";
 
 interface Event {
@@ -47,7 +45,6 @@ const Home = () => {
   const [user, setUser] = useState<User | undefined>(undefined);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [cookies] = useCookies(["XSRF-TOKEN"]);
   const [simpleGroups, setSimpleGroups] = useState<SimpleGroup[]>([]);
   const [userEvents, setUserEvents] = useState<Event[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'user'>('all');
@@ -549,7 +546,6 @@ const Home = () => {
                   events={eventsToDisplay}
                   onDateSelect={handleDateSelect}
                 />
-                <Map />
                 {renderGroupCards()}
                 <Link
                   to="/groups"
