@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -16,6 +17,7 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SimpleSavedRequest;
+import org.springframework.security.web.AuthenticationEntryPoint;
 
 @Profile("!test")
 @Configuration
@@ -24,7 +26,10 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors()
+                .and()
                 .authorizeHttpRequests((authz) -> authz
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/", "/index.html", "/static/**",
                                 "/*.ico", "/*.json", "/*.png", "/api/user")
                         .permitAll()
@@ -34,7 +39,19 @@ public class SecurityConfiguration {
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .addFilterAfter(new CookieCsrfFilter(), BasicAuthenticationFilter.class)
                 .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
-                .oauth2Login();
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler((request, response, authentication) -> {
+                            response.sendRedirect("http://localhost:5173");
+                        })
+                )
+                .exceptionHandling()
+                .defaultAuthenticationEntryPointFor(
+                        (request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Unauthorized\"}");
+                        },
+                        request -> request.getRequestURI().startsWith("/api"));
         return http.build();
     }
 

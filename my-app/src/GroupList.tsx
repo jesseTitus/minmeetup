@@ -32,9 +32,9 @@ const GroupList = () => {
 
   useEffect(() => {
     setLoading(true);
-
+    const apiUrl = import.meta.env.VITE_API_URL;
     // Fetch user information
-    fetch("/api/user", { credentials: "include" })
+    fetch(`${apiUrl}/api/user`, { credentials: "include" })
       .then((response) => response.text())
       .then((body) => {
         if (body !== "") {
@@ -47,8 +47,8 @@ const GroupList = () => {
 
     // Fetch all groups and user's groups
     Promise.all([
-      fetch("/api/groups/available", { credentials: "include" }).then(response => response.json()),
-      fetch("/api/groups", { credentials: "include" }).then(response => response.json())
+      fetch(`${apiUrl}/api/groups/available`, { credentials: "include" }).then(response => response.json()),
+      fetch(`${apiUrl}/api/groups`, { credentials: "include" }).then(response => response.json())
     ])
       .then(([allGroups, userGroups]) => {
         // Create a set of group IDs that the user is a member of
@@ -76,7 +76,8 @@ const GroupList = () => {
 
   const leaveGroup = async (group: Group) => {
     try {
-      const response = await fetch(`/api/groups/members/${group.id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "DELETE",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -86,7 +87,7 @@ const GroupList = () => {
       });
 
       if (response.status === 401 || response.status === 403) {
-        window.location.href = "/oauth2/authorization/auth0";
+        window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
 
@@ -105,7 +106,8 @@ const GroupList = () => {
 
   const joinGroup = async (group: Group) => {
     try {
-      const response = await fetch(`/api/groups/members/${group.id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "POST",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -115,7 +117,7 @@ const GroupList = () => {
       });
 
       if (response.status === 401 || response.status === 403) {
-        window.location.href = "/oauth2/authorization/auth0";
+        window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
 
@@ -241,30 +243,30 @@ const GroupList = () => {
               <div style={{ display: "flex", gap: "8px" }}>
                 {group.isMember ? (
                   <>
-                                    <Button
-                  size="sm"
-                  color="primary"
-                  tag={Link}
-                  to={"/groups/" + group.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  style={{ flex: 1 }}
-                >
-                  Manage
-                </Button>
-                                    <Button
-                  size="sm"
-                  color="danger"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    leaveGroup(group);
-                  }}
-                  style={{ flex: 1 }}
-                >
-                  Leave
-                </Button>
+                    <Button
+                      size="sm"
+                      color="primary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = `/groups/${group.id}`;
+                      }}
+                      style={{ flex: 1 }}
+                    >
+                      Manage
+                    </Button>
+                    <Button
+                      size="sm"
+                      color="danger"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        leaveGroup(group);
+                      }}
+                      style={{ flex: 1 }}
+                    >
+                      Leave
+                    </Button>
                   </>
                 ) : (
                   <Button

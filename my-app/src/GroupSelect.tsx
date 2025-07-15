@@ -38,12 +38,12 @@ const GroupSelect = () => {
 
   useEffect(() => {
     setLoading(true);
-
+    const apiUrl = import.meta.env.VITE_API_URL;
     // Fetch user's current groups first
-    fetch("/api/groups", { credentials: "include" })
+    fetch(`${apiUrl}/api/groups`, { credentials: "include" })
       .then((response) => {
         if (response.status === 401 || response.status === 403) {
-          window.location.href = "/oauth2/authorization/auth0";
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
           return;
         }
         if (!response.ok) {
@@ -57,11 +57,11 @@ const GroupSelect = () => {
         }
 
         // Then fetch all available groups
-        return fetch("/api/groups/available", { credentials: "include" });
+        return fetch(`${apiUrl}/api/groups/available`, { credentials: "include" });
       })
       .then((response) => {
         if (response.status === 401 || response.status === 403) {
-          window.location.href = "/oauth2/authorization/auth0";
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
           return;
         }
         if (!response.ok) {
@@ -91,7 +91,8 @@ const GroupSelect = () => {
     setProcessingGroups(prev => new Set(prev).add(group.id));
 
     try {
-      const response = await fetch(`/api/groups/members/${group.id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "POST",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -101,7 +102,7 @@ const GroupSelect = () => {
       });
 
       if (response.status === 401 || response.status === 403) {
-        window.location.href = "/oauth2/authorization/auth0";
+        window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
 
@@ -133,7 +134,8 @@ const GroupSelect = () => {
     setProcessingGroups(prev => new Set(prev).add(group.id));
 
     try {
-      const response = await fetch(`/api/groups/members/${group.id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "DELETE",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -143,7 +145,7 @@ const GroupSelect = () => {
       });
 
       if (response.status === 401 || response.status === 403) {
-        window.location.href = "/oauth2/authorization/auth0";
+        window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
 

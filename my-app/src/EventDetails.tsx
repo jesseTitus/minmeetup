@@ -42,9 +42,9 @@ const EventDetails = () => {
 
   useEffect(() => {
     if (!id) return;
-
+    const apiUrl = import.meta.env.VITE_API_URL;
     // Fetch the specific event
-    fetch(`/api/events/${id}`, { credentials: "include" })
+    fetch(`${apiUrl}/api/events/${id}`, { credentials: "include" })
       .then((response) => {
         if (!response.ok) {
           throw new Error("Event not found");
@@ -62,7 +62,7 @@ const EventDetails = () => {
       });
 
     // Fetch user's events to check if they're attending
-    fetch("/api/events", { credentials: "include" })
+    fetch(`${apiUrl}/api/events`, { credentials: "include" })
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -86,7 +86,8 @@ const EventDetails = () => {
   const joinEvent = async (event: Event) => {
     console.log("Joining event:", event.id);
     try {
-      const response = await fetch(`/api/events/${event.id}/attendees`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/events/${event.id}/attendees`, {
         method: "POST",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -100,13 +101,13 @@ const EventDetails = () => {
       if (response.ok) {
         console.log("Successfully joined event");
         // Refresh the event data
-        const updatedEvent = await fetch(`/api/events/${event.id}`, {
+        const updatedEvent = await fetch(`${apiUrl}/api/events/${event.id}`, {
           credentials: "include",
         }).then((res) => res.json());
         setEvent(updatedEvent);
 
         // Refresh user events
-        const updatedUserEvents = await fetch("/api/events", {
+        const updatedUserEvents = await fetch(`${apiUrl}/api/events`, {
           credentials: "include",
         }).then((res) => res.json());
         setUserEvents(updatedUserEvents);
@@ -125,7 +126,8 @@ const EventDetails = () => {
   const leaveEvent = async (event: Event) => {
     console.log("Leaving event:", event.id);
     try {
-      const response = await fetch(`/api/events/${event.id}/attendees`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/events/${event.id}/attendees`, {
         method: "DELETE",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -138,13 +140,13 @@ const EventDetails = () => {
       if (response.ok) {
         console.log("Successfully left event");
         // Refresh the event data
-        const updatedEvent = await fetch(`/api/events/${event.id}`, {
+        const updatedEvent = await fetch(`${apiUrl}/api/events/${event.id}`, {
           credentials: "include",
         }).then((res) => res.json());
         setEvent(updatedEvent);
 
         // Refresh user events
-        const updatedUserEvents = await fetch("/api/events", {
+        const updatedUserEvents = await fetch(`${apiUrl}/api/events`, {
           credentials: "include",
         }).then((res) => res.json());
         setUserEvents(updatedUserEvents);

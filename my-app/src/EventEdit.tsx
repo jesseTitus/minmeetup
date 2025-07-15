@@ -31,7 +31,8 @@ const EventEdit = () => {
 
   useEffect(() => {
     // Fetch user's groups for the dropdown
-    fetch("/api/groups", { credentials: "include" })
+    const apiUrl = import.meta.env.VITE_API_URL;
+    fetch(`${apiUrl}/api/groups`, { credentials: "include" })
       .then((response) => response.json())
       .then((data) => setGroups(data))
       .catch((error) => {
@@ -40,7 +41,7 @@ const EventEdit = () => {
 
     // If editing existing event, fetch event data
     if (id !== "new") {
-      fetch(`/api/events/${id}`, { credentials: "include" })
+      fetch(`${apiUrl}/api/events/${id}`, { credentials: "include" })
         .then((response) => response.json())
         .then((data) => setEvent(data))
         .catch((error) => {
@@ -83,8 +84,9 @@ const EventEdit = () => {
     };
 
     try {
+      const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(
-        `/api/events${event.id && event.id > 0 ? `/${event.id}` : ""}`,
+        `${apiUrl}/api/events${event.id && event.id > 0 ? `/${event.id}` : ""}`,
         {
           method: event.id && event.id > 0 ? "PUT" : "POST",
           headers: {

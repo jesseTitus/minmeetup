@@ -47,11 +47,12 @@ const Home = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [simpleGroups, setSimpleGroups] = useState<SimpleGroup[]>([]);
   const [userEvents, setUserEvents] = useState<Event[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'user'>('all');
+  const [activeTab, setActiveTab] = useState<"all" | "user">("all");
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/user", { credentials: "include" })
+    const apiUrl = import.meta.env.VITE_API_URL;
+    fetch(`${apiUrl}/api/user`, { credentials: "include" })
       .then((response) => response.text())
       .then((body) => {
         if (body === "") {
@@ -71,8 +72,9 @@ const Home = () => {
   // Fetch groups when user is authenticated
   useEffect(() => {
     if (authenticated && user) {
+      const apiUrl = import.meta.env.VITE_API_URL;
       // Fetch full groups with events
-      fetch("/api/groups", { credentials: "include" })
+      fetch(`${apiUrl}/api/groups`, { credentials: "include" })
         .then((response) => response.json())
         .then((data) => setGroups(data))
         .catch((error) => {
@@ -80,7 +82,7 @@ const Home = () => {
         });
 
       // Fetch simple groups for the cards
-      fetch("/api/groups", { credentials: "include" })
+      fetch(`${apiUrl}/api/groups`, { credentials: "include" })
         .then((response) => response.json())
         .then((data) => {
           const simple = data.map((group: Group) => ({
@@ -95,7 +97,7 @@ const Home = () => {
         });
 
       // Fetch user's events (events they're attending)
-      fetch("/api/events", { credentials: "include" })
+      fetch(`${apiUrl}/api/events`, { credentials: "include" })
         .then((response) => response.json())
         .then((data) => setUserEvents(data))
         .catch((error) => {
@@ -113,7 +115,7 @@ const Home = () => {
   );
 
   // Choose which events to display based on active tab
-  const eventsToDisplay = activeTab === 'all' ? allGroupEvents : userEvents;
+  const eventsToDisplay = activeTab === "all" ? allGroupEvents : userEvents;
 
   // Filter events based on selected date
   const filteredEvents = (
@@ -150,16 +152,6 @@ const Home = () => {
     setSelectedDate(date);
   };
 
-  const login = () => {
-    let port = window.location.port ? ":" + window.location.port : "";
-    if (port === ":5173") {
-      // Vite's default port
-      port = ":8080";
-    }
-    // redirect to a protected URL to trigger authentication
-    window.location.href = `//${window.location.hostname}${port}/api/private`;
-  };
-
   const message = user ? (
     <h2 style={{ textAlign: "left", fontWeight: "bold" }}>
       Welcome, {getFirstName()} 👋
@@ -168,19 +160,14 @@ const Home = () => {
     <p>Please log in to manage your JUG Tour.</p>
   );
 
-  const button = authenticated ? (
+  const button = authenticated && (
     <div>
       <Button color="link">
         <Link to="/groups">Manage JUG Tour</Link>
       </Button>
       <br />
     </div>
-  ) : (
-    <Button color="primary" onClick={login}>
-      Login
-    </Button>
   );
-
   // Group events by date
   const groupedEvents = filteredEvents.reduce((groups, event) => {
     const eventDate = new Date(event.date);
@@ -580,30 +567,36 @@ const Home = () => {
                       }}
                     >
                       <button
-                        onClick={() => setActiveTab('all')}
+                        onClick={() => setActiveTab("all")}
                         style={{
                           padding: "10px 20px",
                           border: "none",
                           background: "none",
                           cursor: "pointer",
-                          borderBottom: activeTab === 'all' ? "2px solid #007bff" : "2px solid transparent",
-                          color: activeTab === 'all' ? "#007bff" : "#666",
-                          fontWeight: activeTab === 'all' ? "bold" : "normal",
+                          borderBottom:
+                            activeTab === "all"
+                              ? "2px solid #007bff"
+                              : "2px solid transparent",
+                          color: activeTab === "all" ? "#007bff" : "#666",
+                          fontWeight: activeTab === "all" ? "bold" : "normal",
                           fontSize: "16px",
                         }}
                       >
                         All Events ({allGroupEvents.length})
                       </button>
                       <button
-                        onClick={() => setActiveTab('user')}
+                        onClick={() => setActiveTab("user")}
                         style={{
                           padding: "10px 20px",
                           border: "none",
                           background: "none",
                           cursor: "pointer",
-                          borderBottom: activeTab === 'user' ? "2px solid #007bff" : "2px solid transparent",
-                          color: activeTab === 'user' ? "#007bff" : "#666",
-                          fontWeight: activeTab === 'user' ? "bold" : "normal",
+                          borderBottom:
+                            activeTab === "user"
+                              ? "2px solid #007bff"
+                              : "2px solid transparent",
+                          color: activeTab === "user" ? "#007bff" : "#666",
+                          fontWeight: activeTab === "user" ? "bold" : "normal",
                           fontSize: "16px",
                         }}
                       >

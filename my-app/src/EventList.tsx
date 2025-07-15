@@ -41,15 +41,15 @@ const EventList = () => {
     if (!groupId) return;
 
     setLoading(true);
-
+    const apiUrl = import.meta.env.VITE_API_URL;
     // Fetch group details and check membership in parallel
     Promise.all([
-      fetch(`/api/groups/${groupId}`, { credentials: "include" }),
-      fetch("/api/groups", { credentials: "include" }),
+      fetch(`${apiUrl}/api/groups/${groupId}`, { credentials: "include" }),
+      fetch(`${apiUrl}/api/groups`, { credentials: "include" }),
     ])
       .then(([groupResponse, userGroupsResponse]) => {
         if (groupResponse.status === 401 || groupResponse.status === 403) {
-          window.location.href = "/oauth2/authorization/auth0";
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
           return null;
         }
         if (!groupResponse.ok) {

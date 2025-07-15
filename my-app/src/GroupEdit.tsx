@@ -33,7 +33,8 @@ const GroupEdit = () => {
 
   useEffect(() => {
     // Fetch all existing groups for duplicate checking
-    fetch("/api/groups/available", { credentials: "include" })
+    const apiUrl = import.meta.env.VITE_API_URL;
+    fetch(`${apiUrl}/api/groups/available`, { credentials: "include" })
       .then((response) => response.json())
       .then((data) => setExistingGroups(data))
       .catch((error) => {
@@ -41,7 +42,7 @@ const GroupEdit = () => {
       });
 
     if (id !== "new") {
-      fetch(`/api/groups/${id}`, { credentials: "include" })
+      fetch(`${apiUrl}/api/groups/${id}`, { credentials: "include" })
         .then((response) => response.json())
         .then((data) => setGroup(data))
         .catch((error) => {
@@ -66,7 +67,8 @@ const GroupEdit = () => {
     }
 
     try {
-      const response = await fetch(`/api/groups/${groupId}`, {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/groups/${groupId}`, {
         method: "DELETE",
         headers: {
           "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
@@ -109,7 +111,8 @@ const GroupEdit = () => {
       return;
     }
 
-    await fetch(`/api/groups${group.id ? `/${group.id}` : ""}`, {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    await fetch(`${apiUrl}/api/groups${group.id ? `/${group.id}` : ""}`, {
       method: group.id ? "PUT" : "POST",
       headers: {
         "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],

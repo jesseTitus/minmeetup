@@ -33,7 +33,8 @@ const AppNavbar = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/user", { credentials: "include" })
+    const apiUrl = import.meta.env.VITE_API_URL;
+    fetch(`${apiUrl}/api/user`, { credentials: "include" })
       .then((response) => response.text())
       .then((body) => {
         if (body === "") {
@@ -51,17 +52,13 @@ const AppNavbar = () => {
   }, [setAuthenticated, setLoading, setUser]);
 
   const login = () => {
-    let port = window.location.port ? ":" + window.location.port : "";
-    if (port === ":5173") {
-      // Vite's default port
-      port = ":8080";
-    }
-    // redirect to a protected URL to trigger authentication
-    window.location.href = `//${window.location.hostname}${port}/api/private`;
+    const apiUrl = import.meta.env.VITE_API_URL;
+    window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
   };
 
   const logout = () => {
-    fetch("/api/logout", {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    fetch(`${apiUrl}/api/logout`, {
       method: "POST",
       credentials: "include",
       headers: { "X-XSRF-TOKEN": cookies["XSRF-TOKEN"] },
@@ -77,13 +74,16 @@ const AppNavbar = () => {
       });
   };
 
-  const toggleDropdown = () => setDropdownOpen(prevState => !prevState);
+  const toggleDropdown = () => setDropdownOpen((prevState) => !prevState);
 
   const userProfileDropdown = authenticated ? (
     <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
       <DropdownToggle tag="div" style={{ cursor: "pointer" }}>
         <img
-          src={user?.profilePictureUrl || `https://picsum.photos/40/40?random=${user?.id || 'default'}`}
+          src={
+            user?.profilePictureUrl ||
+            `https://picsum.photos/40/40?random=${user?.id || "default"}`
+          }
           alt={user?.name || "User"}
           style={{
             width: "40px",
@@ -93,18 +93,16 @@ const AppNavbar = () => {
             border: "2px solid #e0e0e0",
           }}
           onError={(e) => {
-            e.currentTarget.src = `https://picsum.photos/40/40?random=${user?.id || 'default'}`;
+            e.currentTarget.src = `https://picsum.photos/40/40?random=${
+              user?.id || "default"
+            }`;
           }}
         />
       </DropdownToggle>
       <DropdownMenu end>
-        <DropdownItem header>
-          {user?.name || "User"}
-        </DropdownItem>
+        <DropdownItem header>{user?.name || "User"}</DropdownItem>
         <DropdownItem divider />
-        <DropdownItem onClick={logout}>
-          Logout
-        </DropdownItem>
+        <DropdownItem onClick={logout}>Logout</DropdownItem>
       </DropdownMenu>
     </Dropdown>
   ) : (
