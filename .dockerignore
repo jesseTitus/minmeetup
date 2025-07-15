@@ -1,0 +1,35 @@
+# Maven
+target/
+!target/*.jar
+!target/*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Node.js (frontend)
+my-app/node_modules/
+my-app/dist/
+my-app/.vite/
+my-app/package-lock.json
+
+# Test files
+src/test/
+
+# Documentation
+README.md
+*.md 
