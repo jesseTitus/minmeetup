@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
-import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 import { Link } from "react-router-dom";
 
@@ -28,13 +27,14 @@ const GroupList = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
 
   // Function to get CSRF token from cookies
   const getCsrfToken = (): string | undefined => {
-    const cookies = document.cookie.split(';');
-    const xsrfCookie = cookies.find(cookie => cookie.trim().startsWith('XSRF-TOKEN='));
-    return xsrfCookie ? xsrfCookie.split('=')[1] : undefined;
+    const cookies = document.cookie.split(";");
+    const xsrfCookie = cookies.find((cookie) =>
+      cookie.trim().startsWith("XSRF-TOKEN=")
+    );
+    return xsrfCookie ? xsrfCookie.split("=")[1] : undefined;
   };
 
   // Function to ensure CSRF token is set
@@ -44,11 +44,8 @@ const GroupList = () => {
       const apiUrl = import.meta.env.VITE_API_URL;
       await fetch(`${apiUrl}/api/user`, { credentials: "include" });
       // Wait a moment for the cookie to be set
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       token = getCsrfToken();
-      setCsrfToken(token);
-    } else {
-      setCsrfToken(token);
     }
     return token;
   };
@@ -65,8 +62,6 @@ const GroupList = () => {
         if (body !== "") {
           setUser(JSON.parse(body));
         }
-        // Update CSRF token after the request
-        setCsrfToken(getCsrfToken());
       })
       .catch((error) => {
         console.error("Error fetching user:", error);
