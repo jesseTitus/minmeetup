@@ -42,9 +42,12 @@ public class SecurityConfiguration {
                 .oauth2Login(oauth2 -> oauth2
                     .successHandler((request, response, authentication) -> {
                         String referer = request.getHeader("referer");
+                        String host = request.getServerName();
                         String redirectUrl;
                         
-                        if (referer != null && referer.contains("localhost:5173")) {
+                        // Check if we're running locally (localhost or 127.0.0.1)
+                        if (host.equals("localhost") || host.equals("127.0.0.1") || 
+                            (referer != null && referer.contains("localhost:5173"))) {
                             redirectUrl = "http://localhost:5173";
                         } else {
                             redirectUrl = "https://minmeetup.vercel.app";

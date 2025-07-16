@@ -28,11 +28,36 @@ const GroupList = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [cookies] = useCookies(["XSRF-TOKEN"]);
+  const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
+
+  // Function to get CSRF token from cookies
+  const getCsrfToken = (): string | undefined => {
+    const cookies = document.cookie.split(';');
+    const xsrfCookie = cookies.find(cookie => cookie.trim().startsWith('XSRF-TOKEN='));
+    return xsrfCookie ? xsrfCookie.split('=')[1] : undefined;
+  };
+
+  // Function to ensure CSRF token is set
+  const ensureCsrfToken = async () => {
+    let token = getCsrfToken();
+    if (!token) {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      await fetch(`${apiUrl}/api/user`, { credentials: "include" });
+      // Wait a moment for the cookie to be set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      token = getCsrfToken();
+      setCsrfToken(token);
+    } else {
+      setCsrfToken(token);
+    }
+    return token;
+  };
 
   useEffect(() => {
     setLoading(true);
     const apiUrl = import.meta.env.VITE_API_URL;
+    console.log("XSRF-TOKEN cookie:", getCsrfToken());
+
     // Fetch user information
     fetch(`${apiUrl}/api/user`, { credentials: "include" })
       .then((response) => response.text())
@@ -40,6 +65,8 @@ const GroupList = () => {
         if (body !== "") {
           setUser(JSON.parse(body));
         }
+        // Update CSRF token after the request
+        setCsrfToken(getCsrfToken());
       })
       .catch((error) => {
         console.error("Error fetching user:", error);
@@ -47,24 +74,32 @@ const GroupList = () => {
 
     // Fetch all groups and user's groups
     Promise.all([
-      fetch(`${apiUrl}/api/groups/available`, { credentials: "include" }).then(response => response.json()),
-      fetch(`${apiUrl}/api/groups`, { credentials: "include" }).then(response => response.json())
+      fetch(`${apiUrl}/api/groups/available`, { credentials: "include" }).then(
+        (response) => response.json()
+      ),
+      fetch(`${apiUrl}/api/groups`, { credentials: "include" }).then(
+        (response) => response.json()
+      ),
     ])
       .then(([allGroups, userGroups]) => {
         // Create a set of group IDs that the user is a member of
-        const userGroupIds = new Set(userGroups.map((group: Group) => group.id));
-        
+        const userGroupIds = new Set(
+          userGroups.map((group: Group) => group.id)
+        );
+
         // Mark groups as member or non-member and sort
-        const sortedGroups = allGroups.map((group: Group) => ({
-          ...group,
-          isMember: userGroupIds.has(group.id)
-        })).sort((a: Group, b: Group) => {
-          // Sort by membership status first (members first), then by name
-          if (a.isMember && !b.isMember) return -1;
-          if (!a.isMember && b.isMember) return 1;
-          return a.name.localeCompare(b.name);
-        });
-        
+        const sortedGroups = allGroups
+          .map((group: Group) => ({
+            ...group,
+            isMember: userGroupIds.has(group.id),
+          }))
+          .sort((a: Group, b: Group) => {
+            // Sort by membership status first (members first), then by name
+            if (a.isMember && !b.isMember) return -1;
+            if (!a.isMember && b.isMember) return 1;
+            return a.name.localeCompare(b.name);
+          });
+
         setGroups(sortedGroups);
         setLoading(false);
       })
@@ -76,11 +111,16 @@ const GroupList = () => {
 
   const leaveGroup = async (group: Group) => {
     try {
+      const token = await ensureCsrfToken();
+      if (!token) {
+        console.error("Failed to get CSRF token");
+        return;
+      }
       const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "DELETE",
         headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+          "X-XSRF-TOKEN": token,
           Accept: "application/json",
         },
         credentials: "include",
@@ -106,17 +146,23 @@ const GroupList = () => {
 
   const joinGroup = async (group: Group) => {
     try {
+      const token = await ensureCsrfToken();
+      if (!token) {
+        console.error("Failed to get CSRF token");
+        return;
+      }
       const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "POST",
         headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+          "X-XSRF-TOKEN": token,
           Accept: "application/json",
         },
         credentials: "include",
       });
 
       if (response.status === 401 || response.status === 403) {
+        // debugger; // pause execution in devtools for debugging
         window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
@@ -178,114 +224,114 @@ const GroupList = () => {
               e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
             }}
           >
-          <div
-            style={{
-              height: "150px",
-              overflow: "hidden",
-              borderTopLeftRadius: "0.375rem",
-              borderTopRightRadius: "0.375rem",
-            }}
-          >
-            <img
-              src={
-                group.imageUrl ||
-                `https://picsum.photos/300/200?random=${group.id}`
-              }
-              alt={group.name}
+            <div
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
-              onError={(e) => {
-                e.currentTarget.src = `https://picsum.photos/300/200?random=${group.id}`;
-              }}
-            />
-          </div>
-          <CardBody
-            style={{ flex: 1, display: "flex", flexDirection: "column" }}
-          >
-            <h5
-              style={{
-                marginBottom: "10px",
-                fontWeight: "bold",
-                color: "#333",
+                height: "150px",
+                overflow: "hidden",
+                borderTopLeftRadius: "0.375rem",
+                borderTopRightRadius: "0.375rem",
               }}
             >
-              {group.name}
-            </h5>
+              <img
+                src={
+                  group.imageUrl ||
+                  `https://picsum.photos/300/200?random=${group.id}`
+                }
+                alt={group.name}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+                onError={(e) => {
+                  e.currentTarget.src = `https://picsum.photos/300/200?random=${group.id}`;
+                }}
+              />
+            </div>
+            <CardBody
+              style={{ flex: 1, display: "flex", flexDirection: "column" }}
+            >
+              <h5
+                style={{
+                  marginBottom: "10px",
+                  fontWeight: "bold",
+                  color: "#333",
+                }}
+              >
+                {group.name}
+              </h5>
 
-            {address && (
+              {address && (
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "#666",
+                    marginBottom: "10px",
+                    flex: 1,
+                  }}
+                >
+                  📍 {address}
+                </p>
+              )}
+
               <p
                 style={{
                   fontSize: "14px",
                   color: "#666",
-                  marginBottom: "10px",
+                  marginBottom: "15px",
                   flex: 1,
                 }}
               >
-                📍 {address}
+                📅 {eventCount} event{eventCount !== 1 ? "s" : ""}
               </p>
-            )}
 
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#666",
-                marginBottom: "15px",
-                flex: 1,
-              }}
-            >
-              📅 {eventCount} event{eventCount !== 1 ? "s" : ""}
-            </p>
-
-            <div style={{ marginTop: "auto" }}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                {group.isMember ? (
-                  <>
+              <div style={{ marginTop: "auto" }}>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {group.isMember ? (
+                    <>
+                      <Button
+                        size="sm"
+                        color="primary"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          window.location.href = `/groups/${group.id}`;
+                        }}
+                        style={{ flex: 1 }}
+                      >
+                        Manage
+                      </Button>
+                      <Button
+                        size="sm"
+                        color="danger"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          leaveGroup(group);
+                        }}
+                        style={{ flex: 1 }}
+                      >
+                        Leave
+                      </Button>
+                    </>
+                  ) : (
                     <Button
                       size="sm"
-                      color="primary"
+                      color="success"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        window.location.href = `/groups/${group.id}`;
+                        joinGroup(group);
                       }}
                       style={{ flex: 1 }}
                     >
-                      Manage
+                      Join
                     </Button>
-                    <Button
-                      size="sm"
-                      color="danger"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        leaveGroup(group);
-                      }}
-                      style={{ flex: 1 }}
-                    >
-                      Leave
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    size="sm"
-                    color="success"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      joinGroup(group);
-                    }}
-                    style={{ flex: 1 }}
-                  >
-                    Join
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
         </Link>
       </Col>
     );

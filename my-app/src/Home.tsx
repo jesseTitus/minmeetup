@@ -222,9 +222,9 @@ const Home = () => {
           const formattedDateTime = `${day}, ${month} ${date} - ${time} ${timezone}`;
 
           const truncatedDescription =
-            event.description.length > 32
+            event.description && event.description.length > 32
               ? event.description.substring(0, 32) + "..."
-              : event.description;
+              : event.description || "";
 
           const attendeeCount = event.attendees ? event.attendees.length : 0;
 
@@ -492,9 +492,9 @@ const Home = () => {
                 }).format(new Date(event.date))}
               </div>
               <div style={{ fontSize: "12px", color: "#888" }}>
-                {event.description.length > 60
+                {event.description && event.description.length > 60
                   ? `${event.description.substring(0, 60)}...`
-                  : event.description}
+                  : event.description || ""}
               </div>
               {event.group && (
                 <div
