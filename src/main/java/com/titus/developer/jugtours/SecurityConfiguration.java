@@ -40,9 +40,18 @@ public class SecurityConfiguration {
                 .addFilterAfter(new CookieCsrfFilter(), BasicAuthenticationFilter.class)
                 .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler((request, response, authentication) -> {
-                            response.sendRedirect("http://localhost:5173");
-                        })
+                    .successHandler((request, response, authentication) -> {
+                        String referer = request.getHeader("referer");
+                        String redirectUrl;
+                        
+                        if (referer != null && referer.contains("localhost:5173")) {
+                            redirectUrl = "http://localhost:5173";
+                        } else {
+                            redirectUrl = "https://minmeetup.vercel.app";
+                        }
+                        
+                        response.sendRedirect(redirectUrl);
+                    })
                 )
                 .exceptionHandling()
                 .defaultAuthenticationEntryPointFor(
