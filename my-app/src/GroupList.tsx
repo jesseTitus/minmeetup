@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
+import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 import { Link } from "react-router-dom";
 
@@ -27,95 +28,79 @@ const GroupList = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
-
-  // Function to get CSRF token from cookies
-  const getCsrfToken = (): string | undefined => {
-    const cookies = document.cookie.split(";");
-    const xsrfCookie = cookies.find((cookie) =>
-      cookie.trim().startsWith("XSRF-TOKEN=")
-    );
-    return xsrfCookie ? xsrfCookie.split("=")[1] : undefined;
-  };
-
-  // Function to ensure CSRF token is set
-  const ensureCsrfToken = async () => {
-    let token = getCsrfToken();
-    if (!token) {
-      const apiUrl = import.meta.env.VITE_API_URL;
-      await fetch(`${apiUrl}/api/user`, { credentials: "include" });
-      // Wait a moment for the cookie to be set
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      token = getCsrfToken();
-    }
-    return token;
-  };
+  const [cookies] = useCookies(["XSRF-TOKEN"]);
 
   useEffect(() => {
-    setLoading(true);
-    const apiUrl = import.meta.env.VITE_API_URL;
-    console.log("XSRF-TOKEN cookie:", getCsrfToken());
+    const initializeData = async () => {
+      setLoading(true);
+      const apiUrl = import.meta.env.VITE_API_URL;
 
-    // Fetch user information
-    fetch(`${apiUrl}/api/user`, { credentials: "include" })
-      .then((response) => response.text())
-      .then((body) => {
-        if (body !== "") {
-          setUser(JSON.parse(body));
+      try {
+        // 1. First, ensure we have user data AND XSRF token
+        const userResponse = await fetch(`${apiUrl}/api/user`, {
+          credentials: "include",
+        });
+
+        if (userResponse.ok) {
+          const userText = await userResponse.text();
+          if (userText) {
+            setUser(JSON.parse(userText));
+          }
         }
-      })
-      .catch((error) => {
-        console.error("Error fetching user:", error);
-      });
 
-    // Fetch all groups and user's groups
-    Promise.all([
-      fetch(`${apiUrl}/api/groups/available`, { credentials: "include" }).then(
-        (response) => response.json()
-      ),
-      fetch(`${apiUrl}/api/groups`, { credentials: "include" }).then(
-        (response) => response.json()
-      ),
-    ])
-      .then(([allGroups, userGroups]) => {
-        // Create a set of group IDs that the user is a member of
-        const userGroupIds = new Set(
-          userGroups.map((group: Group) => group.id)
+        // Small delay to ensure cookie is set
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // 3. Now fetch groups data (token should be available)
+        const allGroupsResponse = await fetch(
+          `${apiUrl}/api/groups/available`,
+          { credentials: "include" }
         );
+        const userGroupsResponse = await fetch(`${apiUrl}/api/groups`, {
+          credentials: "include",
+        });
 
-        // Mark groups as member or non-member and sort
-        const sortedGroups = allGroups
-          .map((group: Group) => ({
-            ...group,
-            isMember: userGroupIds.has(group.id),
-          }))
-          .sort((a: Group, b: Group) => {
-            // Sort by membership status first (members first), then by name
-            if (a.isMember && !b.isMember) return -1;
-            if (!a.isMember && b.isMember) return 1;
-            return a.name.localeCompare(b.name);
-          });
+        if (allGroupsResponse.ok && userGroupsResponse.ok) {
+          const [allGroups, userGroups] = await Promise.all([
+            allGroupsResponse.json(),
+            userGroupsResponse.json(),
+          ]);
 
-        setGroups(sortedGroups);
+          // Your existing logic to merge and sort groups
+          const userGroupIds = new Set(
+            userGroups.map((group: Group) => group.id)
+          );
+          const sortedGroups = allGroups
+            .map((group: Group) => ({
+              ...group,
+              isMember: userGroupIds.has(group.id),
+            }))
+            .sort((a: Group, b: Group) => {
+              // Sort by membership status first (members first), then by name
+              if (a.isMember && !b.isMember) return -1;
+              if (!a.isMember && b.isMember) return 1;
+              return a.name.localeCompare(b.name);
+            });
+
+          setGroups(sortedGroups);
+        }
+      } catch (error) {
+        console.error("Error initializing data:", error);
+      } finally {
         setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching groups:", error);
-        setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    initializeData();
+  }, [cookies]);
 
   const leaveGroup = async (group: Group) => {
     try {
-      const token = await ensureCsrfToken();
-      if (!token) {
-        console.error("Failed to get CSRF token");
-        return;
-      }
       const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "DELETE",
         headers: {
-          "X-XSRF-TOKEN": token,
+          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
           Accept: "application/json",
         },
         credentials: "include",
@@ -141,16 +126,11 @@ const GroupList = () => {
 
   const joinGroup = async (group: Group) => {
     try {
-      const token = await ensureCsrfToken();
-      if (!token) {
-        console.error("Failed to get CSRF token");
-        return;
-      }
       const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "POST",
         headers: {
-          "X-XSRF-TOKEN": token,
+          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
           Accept: "application/json",
         },
         credentials: "include",
