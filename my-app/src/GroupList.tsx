@@ -24,11 +24,35 @@ interface Group {
   isMember?: boolean;
 }
 
+// Custom hook to reliably get CSRF token
+const useCsrfToken = () => {
+  const [cookies] = useCookies(["XSRF-TOKEN"]);
+
+  //TODO - proper fix for token undefined in this component
+  const getCsrfToken = () => {
+    // Try useCookies first
+    if (cookies["XSRF-TOKEN"]) {
+      return cookies["XSRF-TOKEN"];
+    }
+
+    // Fallback to document.cookie
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; XSRF-TOKEN=`);
+    if (parts.length === 2) {
+      return parts.pop()?.split(";").shift() || null;
+    }
+
+    return null;
+  };
+
+  return getCsrfToken();
+};
+
 const GroupList = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [cookies] = useCookies(["XSRF-TOKEN"]);
+  const csrfToken = useCsrfToken();
 
   useEffect(() => {
     const initializeData = async () => {
@@ -92,7 +116,7 @@ const GroupList = () => {
     };
 
     initializeData();
-  }, [cookies]);
+  }, []);
 
   const leaveGroup = async (group: Group) => {
     try {
@@ -100,7 +124,7 @@ const GroupList = () => {
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "DELETE",
         headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+          "X-XSRF-TOKEN": csrfToken,
           Accept: "application/json",
         },
         credentials: "include",
@@ -130,14 +154,13 @@ const GroupList = () => {
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "POST",
         headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+          "X-XSRF-TOKEN": csrfToken,
           Accept: "application/json",
         },
         credentials: "include",
       });
 
       if (response.status === 401 || response.status === 403) {
-        // debugger; // pause execution in devtools for debugging
         window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
