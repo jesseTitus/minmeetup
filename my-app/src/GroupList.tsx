@@ -27,24 +27,23 @@ interface Group {
 // Custom hook to reliably get CSRF token
 const useCsrfToken = () => {
   const [cookies] = useCookies(["XSRF-TOKEN"]);
-
-  //TODO - proper fix for token undefined in this component
+  
   const getCsrfToken = () => {
     // Try useCookies first
     if (cookies["XSRF-TOKEN"]) {
       return cookies["XSRF-TOKEN"];
     }
-
+    
     // Fallback to document.cookie
     const value = `; ${document.cookie}`;
     const parts = value.split(`; XSRF-TOKEN=`);
     if (parts.length === 2) {
-      return parts.pop()?.split(";").shift() || null;
+      return parts.pop()?.split(';').shift() || null;
     }
-
+    
     return null;
   };
-
+  
   return getCsrfToken();
 };
 

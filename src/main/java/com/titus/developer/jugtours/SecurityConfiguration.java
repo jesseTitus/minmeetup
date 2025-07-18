@@ -25,11 +25,6 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // Use default CookieCsrfTokenRepository
-        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        csrfTokenRepository.setCookiePath("/");
-        csrfTokenRepository.setCookieName("XSRF-TOKEN");
-
         http
                 .cors()
                 .and()
@@ -40,27 +35,26 @@ public class SecurityConfiguration {
                         .permitAll()
                         .anyRequest().authenticated())
                 .csrf((csrf) -> csrf
-                        .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .addFilterAfter(new CookieCsrfFilter(), BasicAuthenticationFilter.class)
                 .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
-                    .successHandler((request, response, authentication) -> {
-                        String referer = request.getHeader("referer");
-                        String host = request.getServerName();
-                        String redirectUrl;
-                        
-                        // Check if we're running locally (localhost or 127.0.0.1)
-                        if (host.equals("localhost") || host.equals("127.0.0.1") || 
-                            (referer != null && referer.contains("localhost:5173"))) {
-                            redirectUrl = "http://localhost:5173";
-                        } else {
-                            redirectUrl = "https://minmeetup.vercel.app";
-                        }
-                        
-                        response.sendRedirect(redirectUrl);
-                    })
-                )
+                        .successHandler((request, response, authentication) -> {
+                            String referer = request.getHeader("referer");
+                            String host = request.getServerName();
+                            String redirectUrl;
+
+                            // Check if we're running locally (localhost or 127.0.0.1)
+                            if (host.equals("localhost") || host.equals("127.0.0.1") ||
+                                    (referer != null && referer.contains("localhost:5173"))) {
+                                redirectUrl = "http://localhost:5173";
+                            } else {
+                                redirectUrl = "https://minmeetup.vercel.app";
+                            }
+
+                            response.sendRedirect(redirectUrl);
+                        }))
                 .exceptionHandling()
                 .defaultAuthenticationEntryPointFor(
                         (request, response, authException) -> {
