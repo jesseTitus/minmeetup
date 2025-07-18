@@ -36,3 +36,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Frontend Maven Plugin ###
+app/node/
+app/node_modules/
+app/dist/
+app/build/
+node/
+node_modules/
