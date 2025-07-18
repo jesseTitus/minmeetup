@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
-import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 import { Link } from "react-router-dom";
 
@@ -24,63 +23,66 @@ interface Group {
   isMember?: boolean;
 }
 
-// Custom hook to reliably get CSRF token
-const useCsrfToken = () => {
-  const [cookies] = useCookies(["XSRF-TOKEN"]);
-  
-  const getCsrfToken = () => {
-    // Try useCookies first
-    if (cookies["XSRF-TOKEN"]) {
-      return cookies["XSRF-TOKEN"];
-    }
-    
-    // Fallback to document.cookie
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; XSRF-TOKEN=`);
-    if (parts.length === 2) {
-      return parts.pop()?.split(';').shift() || null;
-    }
-    
-    return null;
+// Helper function to get the JWT from localStorage
+const getJwtToken = () => {
+  return localStorage.getItem("jwt_token");
+};
+
+// Helper to create authorized headers
+const createAuthHeaders = () => {
+  const token = getJwtToken();
+  const headers: HeadersInit = {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
   };
-  
-  return getCsrfToken();
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
 };
 
 const GroupList = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const csrfToken = useCsrfToken();
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const initializeData = async () => {
       setLoading(true);
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const headers = createAuthHeaders();
+      const token = getJwtToken();
+
+      // If there's no token, the user is not authenticated
+      if (!token) {
+        // Redirect to login or show a public state
+        window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+        return;
+      }
 
       try {
-        // 1. First, ensure we have user data AND XSRF token
-        const userResponse = await fetch(`${apiUrl}/api/user`, {
-          credentials: "include",
+        // 1. Fetch user data using the JWT
+        const userResponse = await fetch(`${apiUrl}/api/auth/user`, {
+          headers,
         });
 
         if (userResponse.ok) {
-          const userText = await userResponse.text();
-          if (userText) {
-            setUser(JSON.parse(userText));
-          }
+          const userData = await userResponse.json();
+          setUser(userData);
+        } else if (userResponse.status === 401 || userResponse.status === 403) {
+          // Handle expired or invalid token
+          localStorage.removeItem("jwt_token");
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          return;
         }
 
-        // Small delay to ensure cookie is set
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // 3. Now fetch groups data (token should be available)
-        const allGroupsResponse = await fetch(
-          `${apiUrl}/api/groups/available`,
-          { credentials: "include" }
-        );
+        // 2. Fetch groups data using the JWT
+        const allGroupsResponse = await fetch(`${apiUrl}/api/groups/available`, {
+          headers,
+        });
         const userGroupsResponse = await fetch(`${apiUrl}/api/groups`, {
-          credentials: "include",
+          headers,
         });
 
         if (allGroupsResponse.ok && userGroupsResponse.ok) {
@@ -89,7 +91,7 @@ const GroupList = () => {
             userGroupsResponse.json(),
           ]);
 
-          // Your existing logic to merge and sort groups
+          // Your existing logic to merge and sort groups remains the same
           const userGroupIds = new Set(
             userGroups.map((group: Group) => group.id)
           );
@@ -99,7 +101,6 @@ const GroupList = () => {
               isMember: userGroupIds.has(group.id),
             }))
             .sort((a: Group, b: Group) => {
-              // Sort by membership status first (members first), then by name
               if (a.isMember && !b.isMember) return -1;
               if (!a.isMember && b.isMember) return 1;
               return a.name.localeCompare(b.name);
@@ -115,27 +116,22 @@ const GroupList = () => {
     };
 
     initializeData();
-  }, []);
+  }, [apiUrl]);
 
   const leaveGroup = async (group: Group) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "DELETE",
-        headers: {
-          "X-XSRF-TOKEN": csrfToken,
-          Accept: "application/json",
-        },
-        credentials: "include",
+        headers: createAuthHeaders(),
       });
 
       if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("jwt_token");
         window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
 
       if (response.ok) {
-        // Refresh the page to update the button states
         window.location.reload();
       } else {
         console.error("Failed to leave group");
@@ -149,23 +145,18 @@ const GroupList = () => {
 
   const joinGroup = async (group: Group) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "POST",
-        headers: {
-          "X-XSRF-TOKEN": csrfToken,
-          Accept: "application/json",
-        },
-        credentials: "include",
+        headers: createAuthHeaders(),
       });
 
       if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("jwt_token");
         window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
 
       if (response.ok) {
-        // Refresh the page to update the button states
         window.location.reload();
       } else {
         console.error("Failed to join group");

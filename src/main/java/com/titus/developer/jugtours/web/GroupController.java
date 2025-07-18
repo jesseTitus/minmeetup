@@ -21,6 +21,9 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api")
@@ -38,8 +41,9 @@ class GroupController {
     }
 
     @GetMapping("/groups")
-    Collection<Group> groups(Principal principal) {
-        return groupRepository.findAllByUserId(principal.getName());
+    Collection<Group> groups(Principal principal, HttpServletRequest request) {
+        String userId = getUserId(principal, request);
+        return groupRepository.findAllByUserId(userId);
     }
 
     @GetMapping("/groups/available")
@@ -147,16 +151,18 @@ class GroupController {
     @PostMapping("/groups/members/{id}")
     @Transactional
     ResponseEntity<?> joinGroup(@PathVariable("id") Long groupId,
-            @AuthenticationPrincipal OAuth2User principal) {
+            Principal principal, HttpServletRequest request) {
         log.info("Request to join group: {}", groupId);
-        Map<String, Object> details = principal.getAttributes();
-        String userId = details.get("sub").toString();
+        
+        String userId = getUserId(principal, request);
+        Map<String, Object> userDetails = getUserDetails(principal, request);
+        
         log.info("User ID: {}", userId);
 
         // Find or create user
         Optional<User> user = userRepository.findById(userId);
         User currentUser = user.orElse(new User(userId,
-                details.get("name").toString(), details.get("email").toString()));
+                userDetails.get("name").toString(), userDetails.get("email").toString()));
         
         // Save the user if it's new
         if (user.isEmpty()) {
@@ -208,11 +214,10 @@ class GroupController {
     @DeleteMapping("/groups/members/{id}")
     @Transactional
     public ResponseEntity<?> leaveGroup(@PathVariable("id") Long id,
-            @AuthenticationPrincipal OAuth2User principal) {
+            Principal principal, HttpServletRequest request) {
         log.info("Request to leave group: {}", id);
 
-        Map<String, Object> details = principal.getAttributes();
-        String userId = details.get("sub").toString();
+        String userId = getUserId(principal, request);
 
         // Find the group
         Optional<Group> groupOpt = groupRepository.findById(id);
@@ -241,5 +246,33 @@ class GroupController {
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    private String getUserId(Principal principal, HttpServletRequest request) {
+        // Try JWT first
+        io.jsonwebtoken.Claims claims = (io.jsonwebtoken.Claims) request.getAttribute("jwtClaims");
+        if (claims != null) {
+            return claims.getSubject();
+        }
+        // Fallback to OAuth2
+        return principal.getName();
+    }
+
+    private Map<String, Object> getUserDetails(Principal principal, HttpServletRequest request) {
+        // Try JWT first
+        io.jsonwebtoken.Claims claims = (io.jsonwebtoken.Claims) request.getAttribute("jwtClaims");
+        if (claims != null) {
+            Map<String, Object> details = new HashMap<>();
+            details.put("sub", claims.getSubject());
+            details.put("name", claims.get("name"));
+            details.put("email", claims.get("email"));
+            return details;
+        }
+        // Fallback to OAuth2
+        if (principal instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) principal;
+            return oauth2Token.getPrincipal().getAttributes();
+        }
+        return new HashMap<>();
     }
 }
