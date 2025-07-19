@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button, Container, Form, FormGroup, Input, Label, Alert } from "reactstrap";
-import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 
 interface Group {
@@ -14,6 +13,25 @@ interface Group {
   postalCode?: string;
 }
 
+// Helper function to get the JWT from localStorage
+const getJwtToken = () => {
+  return localStorage.getItem("jwt_token");
+};
+
+// Helper to create authorized headers
+const createAuthHeaders = () => {
+  const token = getJwtToken();
+  const headers: HeadersInit = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const GroupEdit = () => {
   const initialFormState: Group = {
     name: "",
@@ -24,79 +42,101 @@ const GroupEdit = () => {
     postalCode: "",
   };
   const [group, setGroup] = useState<Group>(initialFormState);
-  const [existingGroups, setExistingGroups] = useState<Group[]>([]);
-  const [showDuplicateError, setShowDuplicateError] = useState(false);
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [showDuplicateError, setShowDuplicateError] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
-  const [cookies] = useCookies(["XSRF-TOKEN"]);
 
   useEffect(() => {
-    // Fetch all existing groups for duplicate checking
     const apiUrl = import.meta.env.VITE_API_URL;
-    fetch(`${apiUrl}/api/groups/available`, { credentials: "include" })
-      .then((response) => response.json())
-      .then((data) => setExistingGroups(data))
-      .catch((error) => {
-        console.error("Error fetching groups:", error);
-      });
+    const token = getJwtToken();
+
+    if (!token) {
+      window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+      return;
+    }
 
     if (id !== "new") {
-      fetch(`${apiUrl}/api/groups/${id}`, { credentials: "include" })
-        .then((response) => response.json())
-        .then((data) => setGroup(data))
+      fetch(`${apiUrl}/api/groups/${id}`, {
+        headers: createAuthHeaders(),
+      })
+        .then((response) => {
+          if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("jwt_token");
+            window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+            return;
+          }
+          if (!response.ok) {
+            throw new Error("Failed to fetch group");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (data) {
+            setGroup(data);
+          }
+        })
         .catch((error) => {
           console.error("Error fetching group:", error);
         });
     }
-  }, [id, setGroup]);
+
+    fetch(`${apiUrl}/api/groups/available`, {
+      headers: createAuthHeaders(),
+    })
+      .then((response) => {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("jwt_token");
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("Failed to fetch all groups");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data) {
+          setAllGroups(data);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching all groups:", error);
+      });
+  }, [id]);
 
   const isDuplicateName = (name: string): boolean => {
-    if (!name.trim()) return false;
-    
-    return existingGroups.some(existingGroup => 
-      existingGroup.name.toLowerCase() === name.toLowerCase() && 
-      existingGroup.id !== group.id
+    return allGroups.some(
+      (existingGroup) =>
+        existingGroup.name.toLowerCase() === name.toLowerCase() &&
+        existingGroup.id !== group.id
     );
   };
 
   const remove = async (groupId: number) => {
-    if (!groupId) {
-      console.error("Cannot delete group without ID");
-      return;
-    }
-
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const response = await fetch(`${apiUrl}/api/groups/${groupId}`, {
-        method: "DELETE",
-        headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        // Navigate back to groups list after successful deletion
+    const apiUrl = import.meta.env.VITE_API_URL;
+    await fetch(`${apiUrl}/api/groups/${groupId}`, {
+      method: "DELETE",
+      headers: createAuthHeaders(),
+    })
+      .then(() => {
+        let updatedGroups = [...allGroups].filter((i) => i.id !== groupId);
+        setAllGroups(updatedGroups);
         navigate("/groups");
-      } else {
-        console.error("Failed to delete group");
-        alert("Failed to delete group. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error deleting group:", error);
-      alert("Error deleting group. Please try again.");
-    }
+      })
+      .catch((error) => {
+        console.error("Error removing group:", error);
+      });
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setGroup({ ...group, [name]: value });
-    
-    // Hide duplicate error when user starts typing a new name
-    if (name === "name" && showDuplicateError) {
+
+    if (name === "name" && hasAttemptedSubmit) {
+      setShowDuplicateError(isDuplicateName(value));
+    } else if (name === "name") {
       setShowDuplicateError(false);
     }
   };
@@ -105,7 +145,6 @@ const GroupEdit = () => {
     event.preventDefault();
     setHasAttemptedSubmit(true);
 
-    // Check for duplicate name before submitting
     if (isDuplicateName(group.name)) {
       setShowDuplicateError(true);
       return;
@@ -114,17 +153,25 @@ const GroupEdit = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
     await fetch(`${apiUrl}/api/groups${group.id ? `/${group.id}` : ""}`, {
       method: group.id ? "PUT" : "POST",
-      headers: {
-        "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
+      headers: createAuthHeaders(),
       body: JSON.stringify(group),
-      credentials: "include",
     })
-      .then(() => {
-        setGroup(initialFormState);
-        navigate("/groups");
+      .then((response) => {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("jwt_token");
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("Failed to save group");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data) {
+          setGroup(initialFormState);
+          navigate("/groups");
+        }
       })
       .catch((error) => {
         console.error("Error saving group:", error);

@@ -87,14 +87,17 @@ const EventDetails = () => {
     console.log("Joining event:", event.id);
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
-      const response = await fetch(`${apiUrl}/api/events/${event.id}/attendees`, {
-        method: "POST",
-        headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${apiUrl}/api/events/${event.id}/attendees`,
+        {
+          method: "POST",
+          headers: {
+            "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
 
       console.log("Join response status:", response.status);
 
@@ -127,13 +130,16 @@ const EventDetails = () => {
     console.log("Leaving event:", event.id);
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
-      const response = await fetch(`${apiUrl}/api/events/${event.id}/attendees`, {
-        method: "DELETE",
-        headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-        },
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${apiUrl}/api/events/${event.id}/attendees`,
+        {
+          method: "DELETE",
+          headers: {
+            "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
+          },
+          credentials: "include",
+        }
+      );
 
       console.log("Leave response status:", response.status);
 

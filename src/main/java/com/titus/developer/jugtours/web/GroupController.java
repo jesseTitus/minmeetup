@@ -198,9 +198,27 @@ class GroupController {
     }
 
     @PutMapping("/groups/{id}")
-    ResponseEntity<Group> updateGroup(@Valid @RequestBody Group group) {
-        log.info("Request to update group: {}", group);
-        Group result = groupRepository.save(group);
+    ResponseEntity<Group> updateGroup(@PathVariable Long id, @Valid @RequestBody Group groupData) {
+        log.info("Request to update group: {}", groupData);
+        
+        // Find the existing group to preserve user associations
+        Optional<Group> existingGroupOpt = groupRepository.findById(id);
+        if (existingGroupOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        Group existingGroup = existingGroupOpt.get();
+        
+        // Update only the basic group fields, preserve user associations
+        existingGroup.setName(groupData.getName());
+        existingGroup.setAddress(groupData.getAddress());
+        existingGroup.setCity(groupData.getCity());
+        existingGroup.setStateOrProvince(groupData.getStateOrProvince());
+        existingGroup.setCountry(groupData.getCountry());
+        existingGroup.setPostalCode(groupData.getPostalCode());
+        existingGroup.setImageUrl(groupData.getImageUrl());
+        
+        Group result = groupRepository.save(existingGroup);
         return ResponseEntity.ok().body(result);
     }
 
