@@ -1,20 +1,18 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Button,
   Collapse,
   Nav,
+  NavItem,
+  NavLink,
   Navbar,
   NavbarBrand,
   NavbarToggler,
-  NavItem,
-  NavLink,
-  Dropdown,
+  UncontrolledDropdown,
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
 } from "reactstrap";
 import { Link } from "react-router-dom";
-import { useCookies } from "react-cookie";
 
 interface User {
   id: string;
@@ -23,33 +21,62 @@ interface User {
   profilePictureUrl?: string;
 }
 
+// Helper function to get the JWT from localStorage
+const getJwtToken = () => {
+  return localStorage.getItem("jwt_token");
+};
+
+// Helper to decode JWT payload
+const decodeJwtPayload = (token: string) => {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload));
+  } catch (error) {
+    console.error("Error decoding JWT:", error);
+    return null;
+  }
+};
+
+// Helper to check if JWT is expired
+const isJwtExpired = (token: string) => {
+  const payload = decodeJwtPayload(token);
+  if (!payload || !payload.exp) return true;
+  return Date.now() >= payload.exp * 1000;
+};
+
 const AppNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [cookies] = useCookies(["XSRF-TOKEN"]);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | undefined>(undefined);
 
   useEffect(() => {
     setLoading(true);
-    const apiUrl = import.meta.env.VITE_API_URL;
-    fetch(`${apiUrl}/api/user`, { credentials: "include" })
-      .then((response) => response.text())
-      .then((body) => {
-        if (body === "") {
-          setAuthenticated(false);
-        } else {
-          setUser(JSON.parse(body));
-          setAuthenticated(true);
-        }
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching user:", error);
-        setLoading(false);
-      });
-  }, [setAuthenticated, setLoading, setUser]);
+    const token = getJwtToken();
+    
+    if (token && !isJwtExpired(token)) {
+      // Extract user info from JWT
+      const payload = decodeJwtPayload(token);
+      if (payload) {
+        setUser({
+          id: payload.sub,
+          name: payload.name,
+          email: payload.email,
+          profilePictureUrl: payload.picture
+        });
+        setAuthenticated(true);
+      }
+    } else {
+      // Token is missing or expired
+      if (token) {
+        localStorage.removeItem("jwt_token");
+      }
+      setAuthenticated(false);
+      setUser(undefined);
+    }
+    setLoading(false);
+  }, []);
 
   const login = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
@@ -57,62 +84,43 @@ const AppNavbar = () => {
   };
 
   const logout = () => {
-    const apiUrl = import.meta.env.VITE_API_URL;
-    fetch(`${apiUrl}/api/logout`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "X-XSRF-TOKEN": cookies["XSRF-TOKEN"] },
-    })
-      .then((res) => res.json())
-      .then((response) => {
-        window.location.href =
-          `${response.logoutUrl}?id_token_hint=${response.idToken}` +
-          `&post_logout_redirect_uri=${window.location.origin}`;
-      })
-      .catch((error) => {
-        console.error("Error during logout:", error);
-      });
+    localStorage.removeItem("jwt_token");
+    setAuthenticated(false);
+    setUser(undefined);
+    window.location.href = "/";
   };
 
   const toggleDropdown = () => setDropdownOpen((prevState) => !prevState);
 
+  const toggle = () => setIsOpen(!isOpen);
+
+  const getFirstName = () => {
+    if (!user?.name) return "User";
+    return user.name.split(" ")[0];
+  };
+
   const userProfileDropdown = authenticated ? (
-    <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
-      <DropdownToggle tag="div" style={{ cursor: "pointer" }}>
-        <img
-          src={
-            user?.profilePictureUrl ||
-            `https://picsum.photos/40/40?random=${user?.id || "default"}`
-          }
-          alt={user?.name || "User"}
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            objectFit: "cover",
-            border: "2px solid #e0e0e0",
-          }}
-          onError={(e) => {
-            e.currentTarget.src = `https://picsum.photos/40/40?random=${
-              user?.id || "default"
-            }`;
-          }}
-        />
+    <UncontrolledDropdown nav inNavbar isOpen={dropdownOpen} toggle={toggleDropdown}>
+      <DropdownToggle nav caret style={{ color: "black", cursor: "pointer" }}>
+        {getFirstName()}
       </DropdownToggle>
       <DropdownMenu end>
-        <DropdownItem header>{user?.name || "User"}</DropdownItem>
-        <DropdownItem divider />
         <DropdownItem onClick={logout}>Logout</DropdownItem>
       </DropdownMenu>
-    </Dropdown>
+    </UncontrolledDropdown>
   ) : (
-    <Button color="primary" onClick={login}>
-      Login
-    </Button>
+    <NavItem>
+      <NavLink
+        onClick={login}
+        style={{ color: "black", cursor: "pointer" }}
+      >
+        Login
+      </NavLink>
+    </NavItem>
   );
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -171,7 +179,7 @@ const AppNavbar = () => {
 
           <NavItem>
             <NavLink
-              href="https://github.com/jesseTitus"
+              href="https://github.com/jesseTitus/minmeetup"
               style={{ color: "black" }}
             >
               GitHub

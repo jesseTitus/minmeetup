@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Button, Container, Card, CardBody, CardTitle } from "reactstrap";
+import React, { useEffect, useState } from "react";
+import { Button, Container, Row, Col, Card, CardBody, CardTitle } from "reactstrap";
 import AppNavbar from "./AppNavbar";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 
 interface Event {
   id: number;
@@ -30,232 +30,106 @@ interface User {
   email: string;
 }
 
+// Helper function to get the JWT from localStorage
+const getJwtToken = () => {
+  return localStorage.getItem("jwt_token");
+};
+
+// Helper to create authorized headers
+const createAuthHeaders = () => {
+  const token = getJwtToken();
+  const headers: HeadersInit = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const EventList = () => {
-  const [group, setGroup] = useState<Group | null>(null);
-  const [loading, setLoading] = useState(false);
   const { groupId } = useParams<{ groupId: string }>();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [group, setGroup] = useState<Group | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!groupId) return;
 
-    setLoading(true);
     const apiUrl = import.meta.env.VITE_API_URL;
-    // Fetch group details and check membership in parallel
-    Promise.all([
-      fetch(`${apiUrl}/api/groups/${groupId}`, { credentials: "include" }),
-      fetch(`${apiUrl}/api/groups`, { credentials: "include" }),
-    ])
-      .then(([groupResponse, userGroupsResponse]) => {
-        if (groupResponse.status === 401 || groupResponse.status === 403) {
-          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
-          return null;
-        }
-        if (!groupResponse.ok) {
-          throw new Error(`HTTP error! status: ${groupResponse.status}`);
-        }
+    const token = getJwtToken();
 
-        return Promise.all([groupResponse.json(), userGroupsResponse.json()]);
-      })
-      .then((result) => {
-        if (result) {
-          const [groupData, userGroups] = result;
-          setGroup(groupData);
-          // Check if current group is in user's groups
-          setIsMember(
-            userGroups.some((group: Group) => group.id === parseInt(groupId!))
-          );
+    if (!token) {
+      window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+      return;
+    }
+
+    // Fetch group details and user's groups
+    Promise.all([
+      fetch(`${apiUrl}/api/groups/${groupId}`, {
+        headers: createAuthHeaders(),
+      }),
+      fetch(`${apiUrl}/api/groups`, {
+        headers: createAuthHeaders(),
+      }),
+    ])
+      .then(async ([groupResponse, userGroupsResponse]) => {
+        if (groupResponse.status === 401 || groupResponse.status === 403 ||
+            userGroupsResponse.status === 401 || userGroupsResponse.status === 403) {
+          localStorage.removeItem("jwt_token");
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          return;
         }
+        
+        if (!groupResponse.ok || !userGroupsResponse.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        
+        const groupData = await groupResponse.json();
+        const userGroups = await userGroupsResponse.json();
+        
+        setGroup(groupData);
+        setEvents(groupData.events || []);
+        
+        // Check if user is a member
+        const userGroupIds = userGroups.map((g: Group) => g.id);
+        setIsMember(userGroupIds.includes(parseInt(groupId)));
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching group:", error);
+        console.error("Error fetching group data:", error);
         setLoading(false);
-        alert("Unable to load group events. Please try logging in again.");
       });
   }, [groupId]);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div>
+        <AppNavbar />
+        <Container>
+          <p>Loading...</p>
+        </Container>
+      </div>
+    );
   }
 
   if (!group) {
-    return <p>Group not found</p>;
-  }
-
-  const address = `${group.address || ""} ${group.city || ""} ${
-    group.stateOrProvince || ""
-  }`.trim();
-
-  // Sort events by date
-  const sortedEvents = (group.events || []).sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  // Group events by date
-  const groupedEvents = sortedEvents.reduce((groups, event) => {
-    const eventDate = new Date(event.date);
-    const dateKey = eventDate.toDateString(); // Use date string as key
-
-    if (!groups[dateKey]) {
-      groups[dateKey] = [];
-    }
-    groups[dateKey].push(event);
-    return groups;
-  }, {} as Record<string, typeof sortedEvents>);
-
-  const eventCards = Object.entries(groupedEvents).map(([dateKey, events]) => {
-    const date = new Date(dateKey);
-    const formattedDateHeader = new Intl.DateTimeFormat("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "2-digit",
-    }).format(date);
-
     return (
-      <div key={dateKey} style={{ marginBottom: "30px" }}>
-        <h3
-          style={{
-            color: "#333",
-            marginBottom: "15px",
-            borderBottom: "2px solid #666",
-            paddingBottom: "5px",
-            textAlign: "left",
-          }}
-        >
-          {formattedDateHeader}
-        </h3>
-        {events.map((event) => {
-          const eventDate = new Date(event.date);
-          const day = eventDate
-            .toLocaleDateString("en-US", { weekday: "short" })
-            .toUpperCase();
-          const month = eventDate
-            .toLocaleDateString("en-US", { month: "short" })
-            .toUpperCase();
-          const date = eventDate.getDate();
-          const time = eventDate
-            .toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            })
-            .toUpperCase();
-          const timezone = "EDT"; // You might want to make this dynamic based on user's timezone
-          const formattedDateTime = `${day}, ${month} ${date} - ${time} ${timezone}`;
-
-          const truncatedDescription = event.description
-            ? event.description.length > 32
-              ? event.description.substring(0, 32) + "..."
-              : event.description
-            : "";
-
-          const attendeeCount = event.attendees ? event.attendees.length : 0;
-
-          return (
-            <div
-              key={event.id}
-              style={{
-                display: "flex",
-                backgroundColor: "white",
-                border: "1px solid #ddd",
-                borderRadius: "12px",
-                padding: "15px",
-                marginBottom: "15px",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                cursor: "pointer",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-              }}
-              onClick={() => navigate(`/events/${event.id}`)}
-            >
-              {/* Group image on the left */}
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  borderRadius: "8px",
-                  marginRight: "15px",
-                  overflow: "hidden",
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src={
-                    group.imageUrl ||
-                    `https://picsum.photos/80/80?random=${group.id}`
-                  }
-                  alt={group.name}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.src = `https://picsum.photos/80/80?random=${group.id}`;
-                  }}
-                />
-              </div>
-
-              {/* Content on the right */}
-              <div style={{ flex: 1, textAlign: "left" }}>
-                {/* Time in bronze */}
-                <div
-                  style={{
-                    color: "#8B4513",
-                    fontSize: "14px",
-                    marginBottom: "5px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {formattedDateTime}
-                </div>
-
-                {/* Title bolded */}
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "16px",
-                    marginBottom: "8px",
-                  }}
-                >
-                  {event.title}
-                </div>
-
-                {/* Description truncated */}
-                <div
-                  style={{
-                    fontSize: "14px",
-                    color: "#666",
-                    marginBottom: "8px",
-                  }}
-                >
-                  {truncatedDescription}
-                </div>
-
-                {/* Blank line */}
-                <div style={{ height: "8px" }}></div>
-
-                {/* Attendee count */}
-                <div style={{ fontSize: "12px", color: "#888" }}>
-                  {attendeeCount} attendee{attendeeCount !== 1 ? "s" : ""}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <div>
+        <AppNavbar />
+        <Container>
+          <p>Group not found</p>
+          <Button color="primary" onClick={() => navigate("/groups")}>
+            Back to Groups
+          </Button>
+        </Container>
       </div>
     );
-  });
+  }
 
   return (
     <div>
@@ -265,43 +139,28 @@ const EventList = () => {
           <Button color="secondary" tag={Link} to="/groups">
             Back to Groups
           </Button>
-        </div>
-        <Card>
-          <CardBody>
-            <CardTitle tag="h3">{group.name} - Events</CardTitle>
-            {address && <p className="text-muted">Location: {address}</p>}
-            <p className="text-muted">
-              {group.events?.length || 0} event(s) found
-            </p>
-            {isMember ? (
-              <Button
-                color="success"
-                tag={Link}
-                to={`/groups/${groupId}/events/new`}
-              >
-                Add New Event
-              </Button>
-            ) : null}
-          </CardBody>
-        </Card>
-
-        {/* Event Cards */}
-        <div style={{ marginTop: "20px" }}>
-          {group.events && group.events.length > 0 ? (
-            eventCards
-          ) : (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "40px",
-                color: "#666",
-                backgroundColor: "white",
-                border: "1px solid #ddd",
-                borderRadius: "12px",
-              }}
+          {isMember && (
+            <Button
+              color="primary"
+              tag={Link}
+              to={`/groups/${groupId}/events/new`}
+              style={{ marginLeft: "10px" }}
             >
-              <p>No events found for this group</p>
+              New Event
+            </Button>
+          )}
+        </div>
 
+        <h3>{group.name} Events</h3>
+        <p>
+          {group.address} {group.city} {group.stateOrProvince}
+        </p>
+
+        {events.length === 0 ? (
+          <Card>
+            <CardBody>
+              <CardTitle tag="h5">No Events Scheduled</CardTitle>
+              <p>There are currently no events scheduled for this group.</p>
               {isMember && (
                 <Button
                   color="primary"
@@ -311,9 +170,52 @@ const EventList = () => {
                   Create First Event
                 </Button>
               )}
-            </div>
-          )}
-        </div>
+            </CardBody>
+          </Card>
+        ) : (
+          <Row>
+            {events.map((event) => (
+              <Col key={event.id} md={6} lg={4} className="mb-4">
+                <Card
+                  style={{
+                    height: "100%",
+                    cursor: "pointer",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                  }}
+                  onClick={() => navigate(`/events/${event.id}`)}
+                >
+                  <CardBody>
+                    <CardTitle tag="h5">{event.title}</CardTitle>
+                    <p style={{ fontSize: "14px", color: "#666" }}>
+                      {new Intl.DateTimeFormat("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }).format(new Date(event.date))}
+                    </p>
+                    <p>{event.description}</p>
+                    {event.attendees && (
+                      <p style={{ fontSize: "12px", color: "#888" }}>
+                        {event.attendees.length} attendee{event.attendees.length !== 1 ? "s" : ""}
+                      </p>
+                    )}
+                  </CardBody>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
       </Container>
     </div>
   );

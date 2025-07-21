@@ -7,7 +7,6 @@ import {
   CardBody,
   CardTitle,
 } from "reactstrap";
-import { useCookies } from "react-cookie";
 import AppNavbar from "./AppNavbar";
 import { Link } from "react-router-dom";
 
@@ -29,20 +28,48 @@ interface Group {
   events?: Event[];
 }
 
+// Helper function to get the JWT from localStorage
+const getJwtToken = () => {
+  return localStorage.getItem("jwt_token");
+};
+
+// Helper to create authorized headers
+const createAuthHeaders = () => {
+  const token = getJwtToken();
+  const headers: HeadersInit = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const GroupSelect = () => {
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [userGroups, setUserGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
   const [processingGroups, setProcessingGroups] = useState<Set<number>>(new Set());
-  const [cookies] = useCookies(["XSRF-TOKEN"]);
 
   useEffect(() => {
     setLoading(true);
     const apiUrl = import.meta.env.VITE_API_URL;
+    const token = getJwtToken();
+
+    if (!token) {
+      window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+      return;
+    }
+
     // Fetch user's current groups first
-    fetch(`${apiUrl}/api/groups`, { credentials: "include" })
+    fetch(`${apiUrl}/api/groups`, {
+      headers: createAuthHeaders(),
+    })
       .then((response) => {
         if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("jwt_token");
           window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
           return;
         }
@@ -57,10 +84,13 @@ const GroupSelect = () => {
         }
 
         // Then fetch all available groups
-        return fetch(`${apiUrl}/api/groups/available`, { credentials: "include" });
+        return fetch(`${apiUrl}/api/groups/available`, {
+          headers: createAuthHeaders(),
+        });
       })
       .then((response) => {
         if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("jwt_token");
           window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
           return;
         }
@@ -94,14 +124,11 @@ const GroupSelect = () => {
       const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "POST",
-        headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-          Accept: "application/json",
-        },
-        credentials: "include",
+        headers: createAuthHeaders(),
       });
 
       if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("jwt_token");
         window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
@@ -137,14 +164,11 @@ const GroupSelect = () => {
       const apiUrl = import.meta.env.VITE_API_URL;
       const response = await fetch(`${apiUrl}/api/groups/members/${group.id}`, {
         method: "DELETE",
-        headers: {
-          "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-          Accept: "application/json",
-        },
-        credentials: "include",
+        headers: createAuthHeaders(),
       });
 
       if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("jwt_token");
         window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
         return;
       }
