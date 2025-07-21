@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Button, Container, Form, FormGroup, Input, Label, Alert } from "reactstrap";
+import {
+  Button,
+  Container,
+  Form,
+  FormGroup,
+  Input,
+  Label,
+  Alert,
+} from "reactstrap";
 import AppNavbar from "./AppNavbar";
 
 interface Group {
@@ -53,7 +61,7 @@ const GroupEdit = () => {
     const token = getJwtToken();
 
     if (!token) {
-      // Don't make API calls if not authenticated, just return
+      window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
       return;
     }
 
@@ -145,12 +153,6 @@ const GroupEdit = () => {
     event.preventDefault();
     setHasAttemptedSubmit(true);
 
-    const token = getJwtToken();
-    if (!token) {
-      alert("Please log in to save groups");
-      return;
-    }
-
     if (isDuplicateName(group.name)) {
       setShowDuplicateError(true);
       return;
@@ -186,42 +188,27 @@ const GroupEdit = () => {
 
   const title = <h2>{group.id ? "Edit Group" : "Create Group"}</h2>;
 
-  // Check if user is authenticated
-  const token = getJwtToken();
-  if (!token) {
-    return (
-      <div>
-        <AppNavbar />
-        <Container>
-          <h2>Authentication Required</h2>
-          <p>Please log in to create or edit groups.</p>
-          <Button 
-            color="primary" 
-            onClick={() => {
-              const apiUrl = import.meta.env.VITE_API_URL;
-              window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
-            }}
-          >
-            Log In
-          </Button>
-        </Container>
-      </div>
-    );
-  }
-
   return (
     <div>
       <AppNavbar />
       <Container>
         {title}
-        
+
         {/* Error message for duplicate group name */}
         {showDuplicateError && hasAttemptedSubmit && (
-          <Alert color="danger" style={{ backgroundColor: '#f8f9fa', borderColor: '#dc3545', color: '#dc3545' }}>
-            <strong>Error:</strong> A group with this name already exists. Please choose a unique name.
+          <Alert
+            color="danger"
+            style={{
+              backgroundColor: "#f8f9fa",
+              borderColor: "#dc3545",
+              color: "#dc3545",
+            }}
+          >
+            <strong>Error:</strong> A group with this name already exists.
+            Please choose a unique name.
           </Alert>
         )}
-        
+
         <Form onSubmit={handleSubmit}>
           <FormGroup>
             <Label for="name">Name</Label>
@@ -293,8 +280,8 @@ const GroupEdit = () => {
             </FormGroup>
           </div>
           <FormGroup>
-            <Button 
-              color="primary" 
+            <Button
+              color="primary"
               type="submit"
               disabled={showDuplicateError && hasAttemptedSubmit}
             >

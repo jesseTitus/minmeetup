@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -123,7 +122,7 @@ class EventController {
         if (eventOpt.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        
+
         Event event = eventOpt.get();
         Map<String, Object> eventWithGroup = new java.util.HashMap<>();
         eventWithGroup.put("id", event.getId());
@@ -200,28 +199,28 @@ class EventController {
     ResponseEntity<Event> updateEvent(@PathVariable Long id, @Valid @RequestBody EventRequest eventRequest,
             Principal principal, HttpServletRequest request) {
         log.info("Request to update event: {}", eventRequest);
-        
+
         String userId = getUserId(principal, request);
-        
+
         // Find the existing event
         Optional<Event> existingEventOpt = eventRepository.findById(id);
         if (existingEventOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         Event existingEvent = existingEventOpt.get();
-        
+
         // Verify user has permission to update this event (owns the group)
         if (existingEvent.getGroup() == null || !existingEvent.getGroup().hasUser(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         // Update the event fields while preserving the group association
         existingEvent.setTitle(eventRequest.getTitle());
         existingEvent.setDescription(eventRequest.getDescription());
         existingEvent.setDate(eventRequest.getDate());
         // Keep the existing group - don't change it
-        
+
         Event result = eventRepository.save(existingEvent);
         return ResponseEntity.ok().body(result);
     }
@@ -238,10 +237,10 @@ class EventController {
     ResponseEntity<?> joinEvent(@PathVariable("id") Long eventId,
             Principal principal, HttpServletRequest request) {
         log.info("Request to attend event: {}", eventId);
-        
+
         String userId = getUserId(principal, request);
         Map<String, Object> userDetails = getUserDetails(principal, request);
-        
+
         log.info("User ID: {}", userId);
 
         // Find user
@@ -287,7 +286,7 @@ class EventController {
     ResponseEntity<?> leaveEvent(@PathVariable("id") Long eventId,
             Principal principal, HttpServletRequest request) {
         log.info("Request to leave event: {}", eventId);
-        
+
         String userId = getUserId(principal, request);
 
         // Find the event
@@ -362,7 +361,8 @@ class EventController {
         }
     }
 
-    // Helper methods to get user ID and details from either JWT claims or OAuth2 principal
+    // Helper methods to get user ID and details from either JWT claims or OAuth2
+    // principal
     private String getUserId(Principal principal, HttpServletRequest request) {
         // Try JWT first
         io.jsonwebtoken.Claims claims = (io.jsonwebtoken.Claims) request.getAttribute("jwtClaims");

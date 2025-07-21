@@ -105,15 +105,16 @@ class GroupController {
 
     @PostMapping("/groups")
     ResponseEntity<Group> createGroup(@Valid @RequestBody Group group,
-            @AuthenticationPrincipal OAuth2User principal) throws URISyntaxException {
+            Principal principal, HttpServletRequest request) throws URISyntaxException {
         log.info("Request to create group: {}", group);
-        Map<String, Object> details = principal.getAttributes();
-        String userId = details.get("sub").toString();
-
+        
+        String userId = getUserId(principal, request);
+        Map<String, Object> userDetails = getUserDetails(principal, request);
+        
         // check to see if user already exists
         Optional<User> user = userRepository.findById(userId);
         User currentUser = user.orElse(new User(userId,
-                details.get("name").toString(), details.get("email").toString()));
+                userDetails.get("name").toString(), userDetails.get("email").toString()));
 
         // Check if a group with this name already exists
         Optional<Group> existingGroup = groupRepository.findByName(group.getName());
@@ -198,7 +199,8 @@ class GroupController {
     }
 
     @PutMapping("/groups/{id}")
-    ResponseEntity<Group> updateGroup(@PathVariable Long id, @Valid @RequestBody Group groupData) {
+    ResponseEntity<Group> updateGroup(@PathVariable Long id, @Valid @RequestBody Group groupData,
+            Principal principal, HttpServletRequest request) {
         log.info("Request to update group: {}", groupData);
         
         // Find the existing group to preserve user associations
