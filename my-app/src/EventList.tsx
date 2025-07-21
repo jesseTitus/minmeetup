@@ -1,5 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { Button, Container, Row, Col, Card, CardBody, CardTitle } from "reactstrap";
+import { useEffect, useState } from "react";
+import {
+  Button,
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  CardTitle,
+} from "reactstrap";
 import AppNavbar from "./AppNavbar";
 import { Link, useParams, useNavigate } from "react-router-dom";
 
@@ -78,23 +86,27 @@ const EventList = () => {
       }),
     ])
       .then(async ([groupResponse, userGroupsResponse]) => {
-        if (groupResponse.status === 401 || groupResponse.status === 403 ||
-            userGroupsResponse.status === 401 || userGroupsResponse.status === 403) {
+        if (
+          groupResponse.status === 401 ||
+          groupResponse.status === 403 ||
+          userGroupsResponse.status === 401 ||
+          userGroupsResponse.status === 403
+        ) {
           localStorage.removeItem("jwt_token");
           window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
           return;
         }
-        
+
         if (!groupResponse.ok || !userGroupsResponse.ok) {
           throw new Error("Failed to fetch data");
         }
-        
+
         const groupData = await groupResponse.json();
         const userGroups = await userGroupsResponse.json();
-        
+
         setGroup(groupData);
         setEvents(groupData.events || []);
-        
+
         // Check if user is a member
         const userGroupIds = userGroups.map((g: Group) => g.id);
         setIsMember(userGroupIds.includes(parseInt(groupId)));
@@ -184,11 +196,13 @@ const EventList = () => {
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 8px rgba(0,0,0,0.15)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 4px rgba(0,0,0,0.1)";
                   }}
                   onClick={() => navigate(`/events/${event.id}`)}
                 >
@@ -207,7 +221,8 @@ const EventList = () => {
                     <p>{event.description}</p>
                     {event.attendees && (
                       <p style={{ fontSize: "12px", color: "#888" }}>
-                        {event.attendees.length} attendee{event.attendees.length !== 1 ? "s" : ""}
+                        {event.attendees.length} attendee
+                        {event.attendees.length !== 1 ? "s" : ""}
                       </p>
                     )}
                   </CardBody>

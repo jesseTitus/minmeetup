@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import AppNavbar from "./AppNavbar";
 import { Link, useNavigate } from "react-router-dom";
@@ -32,12 +32,6 @@ interface User {
   email: string;
 }
 
-interface SimpleGroup {
-  id: number;
-  name: string;
-  imageUrl?: string;
-}
-
 // Helper function to get the JWT from localStorage
 const getJwtToken = () => {
   return localStorage.getItem("jwt_token");
@@ -69,7 +63,7 @@ const decodeJwtPayload = (token: string) => {
 };
 
 const Home = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [events, setEvents] = useState<Event[]>([]);

@@ -53,7 +53,7 @@ const GroupEdit = () => {
     const token = getJwtToken();
 
     if (!token) {
-      window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+      // Don't make API calls if not authenticated, just return
       return;
     }
 
@@ -145,6 +145,12 @@ const GroupEdit = () => {
     event.preventDefault();
     setHasAttemptedSubmit(true);
 
+    const token = getJwtToken();
+    if (!token) {
+      alert("Please log in to save groups");
+      return;
+    }
+
     if (isDuplicateName(group.name)) {
       setShowDuplicateError(true);
       return;
@@ -179,6 +185,29 @@ const GroupEdit = () => {
   };
 
   const title = <h2>{group.id ? "Edit Group" : "Create Group"}</h2>;
+
+  // Check if user is authenticated
+  const token = getJwtToken();
+  if (!token) {
+    return (
+      <div>
+        <AppNavbar />
+        <Container>
+          <h2>Authentication Required</h2>
+          <p>Please log in to create or edit groups.</p>
+          <Button 
+            color="primary" 
+            onClick={() => {
+              const apiUrl = import.meta.env.VITE_API_URL;
+              window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+            }}
+          >
+            Log In
+          </Button>
+        </Container>
+      </div>
+    );
+  }
 
   return (
     <div>

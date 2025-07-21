@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Collapse,
   Nav,
@@ -29,7 +29,7 @@ const getJwtToken = () => {
 // Helper to decode JWT payload
 const decodeJwtPayload = (token: string) => {
   try {
-    const payload = token.split('.')[1];
+    const payload = token.split(".")[1];
     return JSON.parse(atob(payload));
   } catch (error) {
     console.error("Error decoding JWT:", error);
@@ -54,7 +54,7 @@ const AppNavbar = () => {
   useEffect(() => {
     setLoading(true);
     const token = getJwtToken();
-    
+
     if (token && !isJwtExpired(token)) {
       // Extract user info from JWT
       const payload = decodeJwtPayload(token);
@@ -63,7 +63,7 @@ const AppNavbar = () => {
           id: payload.sub,
           name: payload.name,
           email: payload.email,
-          profilePictureUrl: payload.picture
+          profilePictureUrl: payload.picture,
         });
         setAuthenticated(true);
       }
@@ -92,7 +92,7 @@ const AppNavbar = () => {
 
   const toggleDropdown = () => setDropdownOpen((prevState) => !prevState);
 
-  const toggle = () => setIsOpen(!isOpen);
+  // const toggle = () => setIsOpen(!isOpen);
 
   const getFirstName = () => {
     if (!user?.name) return "User";
@@ -100,7 +100,12 @@ const AppNavbar = () => {
   };
 
   const userProfileDropdown = authenticated ? (
-    <UncontrolledDropdown nav inNavbar isOpen={dropdownOpen} toggle={toggleDropdown}>
+    <UncontrolledDropdown
+      nav
+      inNavbar
+      isOpen={dropdownOpen}
+      toggle={toggleDropdown}
+    >
       <DropdownToggle nav caret style={{ color: "black", cursor: "pointer" }}>
         {getFirstName()}
       </DropdownToggle>
@@ -110,10 +115,7 @@ const AppNavbar = () => {
     </UncontrolledDropdown>
   ) : (
     <NavItem>
-      <NavLink
-        onClick={login}
-        style={{ color: "black", cursor: "pointer" }}
-      >
+      <NavLink onClick={login} style={{ color: "black", cursor: "pointer" }}>
         Login
       </NavLink>
     </NavItem>

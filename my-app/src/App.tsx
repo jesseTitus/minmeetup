@@ -15,6 +15,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/groups" element={<GroupList />} />
+        <Route path="/groups/new" element={<GroupEdit />} />
         <Route path="/groups/:id" element={<GroupEdit />} />
         <Route path="/groups/:groupId/events" element={<EventList />} />
         <Route path="/groups/:groupId/events/new" element={<EventEdit />} />
