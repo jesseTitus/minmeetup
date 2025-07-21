@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
 import AppNavbar from "./AppNavbar";
-import { useCookies } from "react-cookie";
 
 interface Event {
   id: number;
@@ -31,6 +30,25 @@ interface User {
   profilePictureUrl?: string;
 }
 
+// Helper function to get the JWT from localStorage
+const getJwtToken = () => {
+  return localStorage.getItem("jwt_token");
+};
+
+// Helper to create authorized headers
+const createAuthHeaders = () => {
+  const token = getJwtToken();
+  const headers: HeadersInit = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const EventDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -38,22 +56,37 @@ const EventDetails = () => {
   const [userEvents, setUserEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cookies] = useCookies(["XSRF-TOKEN"]);
 
   useEffect(() => {
     if (!id) return;
     const apiUrl = import.meta.env.VITE_API_URL;
+    const token = getJwtToken();
+
+    if (!token) {
+      window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+      return;
+    }
+
     // Fetch the specific event
-    fetch(`${apiUrl}/api/events/${id}`, { credentials: "include" })
+    fetch(`${apiUrl}/api/events/${id}`, {
+      headers: createAuthHeaders(),
+    })
       .then((response) => {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("jwt_token");
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          return;
+        }
         if (!response.ok) {
           throw new Error("Event not found");
         }
         return response.json();
       })
       .then((data) => {
-        setEvent(data);
-        setLoading(false);
+        if (data) {
+          setEvent(data);
+          setLoading(false);
+        }
       })
       .catch((error) => {
         console.error("Error fetching event:", error);
@@ -62,15 +95,24 @@ const EventDetails = () => {
       });
 
     // Fetch user's events to check if they're attending
-    fetch(`${apiUrl}/api/events`, { credentials: "include" })
+    fetch(`${apiUrl}/api/events`, {
+      headers: createAuthHeaders(),
+    })
       .then((response) => {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("jwt_token");
+          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          return;
+        }
         if (response.ok) {
           return response.json();
         }
         return [];
       })
       .then((data) => {
-        setUserEvents(data);
+        if (data) {
+          setUserEvents(data);
+        }
       })
       .catch((error) => {
         console.error("Error fetching user events:", error);
@@ -91,11 +133,7 @@ const EventDetails = () => {
         `${apiUrl}/api/events/${event.id}/attendees`,
         {
           method: "POST",
-          headers: {
-            "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
+          headers: createAuthHeaders(),
         }
       );
 
@@ -105,13 +143,13 @@ const EventDetails = () => {
         console.log("Successfully joined event");
         // Refresh the event data
         const updatedEvent = await fetch(`${apiUrl}/api/events/${event.id}`, {
-          credentials: "include",
+          headers: createAuthHeaders(),
         }).then((res) => res.json());
         setEvent(updatedEvent);
 
         // Refresh user events
         const updatedUserEvents = await fetch(`${apiUrl}/api/events`, {
-          credentials: "include",
+          headers: createAuthHeaders(),
         }).then((res) => res.json());
         setUserEvents(updatedUserEvents);
       } else {
@@ -134,10 +172,7 @@ const EventDetails = () => {
         `${apiUrl}/api/events/${event.id}/attendees`,
         {
           method: "DELETE",
-          headers: {
-            "X-XSRF-TOKEN": cookies["XSRF-TOKEN"],
-          },
-          credentials: "include",
+          headers: createAuthHeaders(),
         }
       );
 
@@ -147,13 +182,13 @@ const EventDetails = () => {
         console.log("Successfully left event");
         // Refresh the event data
         const updatedEvent = await fetch(`${apiUrl}/api/events/${event.id}`, {
-          credentials: "include",
+          headers: createAuthHeaders(),
         }).then((res) => res.json());
         setEvent(updatedEvent);
 
         // Refresh user events
         const updatedUserEvents = await fetch(`${apiUrl}/api/events`, {
-          credentials: "include",
+          headers: createAuthHeaders(),
         }).then((res) => res.json());
         setUserEvents(updatedUserEvents);
       } else {

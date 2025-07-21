@@ -24,6 +24,9 @@ import java.security.Principal;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api")
@@ -162,16 +165,16 @@ class EventController {
 
     @PostMapping("/events")
     ResponseEntity<Event> createEvent(@Valid @RequestBody EventRequest eventRequest,
-            @AuthenticationPrincipal OAuth2User principal) throws URISyntaxException {
+            Principal principal, HttpServletRequest request) throws URISyntaxException {
         log.info("Request to create event: {}", eventRequest);
 
-        Map<String, Object> details = principal.getAttributes();
-        String userId = details.get("sub").toString();
+        String userId = getUserId(principal, request);
+        Map<String, Object> userDetails = getUserDetails(principal, request);
 
         // Find or create user
         Optional<User> user = userRepository.findById(userId);
         User currentUser = user.orElse(new User(userId,
-                details.get("name").toString(), details.get("email").toString()));
+                userDetails.get("name").toString(), userDetails.get("email").toString()));
 
         // Find the group and verify user owns it
         Optional<Group> group = groupRepository.findById(eventRequest.getGroupId());
@@ -194,9 +197,32 @@ class EventController {
     }
 
     @PutMapping("/events/{id}")
-    ResponseEntity<Event> updateEvent(@Valid @RequestBody Event event) {
-        log.info("Request to update event: {}", event);
-        Event result = eventRepository.save(event);
+    ResponseEntity<Event> updateEvent(@PathVariable Long id, @Valid @RequestBody EventRequest eventRequest,
+            Principal principal, HttpServletRequest request) {
+        log.info("Request to update event: {}", eventRequest);
+        
+        String userId = getUserId(principal, request);
+        
+        // Find the existing event
+        Optional<Event> existingEventOpt = eventRepository.findById(id);
+        if (existingEventOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        Event existingEvent = existingEventOpt.get();
+        
+        // Verify user has permission to update this event (owns the group)
+        if (existingEvent.getGroup() == null || !existingEvent.getGroup().hasUser(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        // Update the event fields while preserving the group association
+        existingEvent.setTitle(eventRequest.getTitle());
+        existingEvent.setDescription(eventRequest.getDescription());
+        existingEvent.setDate(eventRequest.getDate());
+        // Keep the existing group - don't change it
+        
+        Event result = eventRepository.save(existingEvent);
         return ResponseEntity.ok().body(result);
     }
 
@@ -210,16 +236,18 @@ class EventController {
     @PostMapping("/events/{id}/attendees")
     @Transactional
     ResponseEntity<?> joinEvent(@PathVariable("id") Long eventId,
-            @AuthenticationPrincipal OAuth2User principal) {
+            Principal principal, HttpServletRequest request) {
         log.info("Request to attend event: {}", eventId);
-        Map<String, Object> details = principal.getAttributes();
-        String userId = details.get("sub").toString();
+        
+        String userId = getUserId(principal, request);
+        Map<String, Object> userDetails = getUserDetails(principal, request);
+        
         log.info("User ID: {}", userId);
 
         // Find user
         Optional<User> user = userRepository.findById(userId);
         User currentUser = user.orElse(new User(userId,
-                details.get("name").toString(), details.get("email").toString()));
+                userDetails.get("name").toString(), userDetails.get("email").toString()));
 
         // Save the user if it's new
         if (user.isEmpty()) {
@@ -252,16 +280,15 @@ class EventController {
         log.info("User {} successfully joined event {}", userId, eventId);
 
         return ResponseEntity.ok().body(result);
-
     }
 
     @DeleteMapping("/events/{id}/attendees")
     @Transactional
     ResponseEntity<?> leaveEvent(@PathVariable("id") Long eventId,
-            @AuthenticationPrincipal OAuth2User principal) {
+            Principal principal, HttpServletRequest request) {
         log.info("Request to leave event: {}", eventId);
-        Map<String, Object> details = principal.getAttributes();
-        String userId = details.get("sub").toString();
+        
+        String userId = getUserId(principal, request);
 
         // Find the event
         Optional<Event> eventOpt = eventRepository.findById(eventId);
@@ -333,5 +360,34 @@ class EventController {
         public void setGroupId(Long groupId) {
             this.groupId = groupId;
         }
+    }
+
+    // Helper methods to get user ID and details from either JWT claims or OAuth2 principal
+    private String getUserId(Principal principal, HttpServletRequest request) {
+        // Try JWT first
+        io.jsonwebtoken.Claims claims = (io.jsonwebtoken.Claims) request.getAttribute("jwtClaims");
+        if (claims != null) {
+            return claims.getSubject();
+        }
+        // Fallback to OAuth2
+        return principal.getName();
+    }
+
+    private Map<String, Object> getUserDetails(Principal principal, HttpServletRequest request) {
+        // Try JWT first
+        io.jsonwebtoken.Claims claims = (io.jsonwebtoken.Claims) request.getAttribute("jwtClaims");
+        if (claims != null) {
+            Map<String, Object> details = new HashMap<>();
+            details.put("sub", claims.getSubject());
+            details.put("name", claims.get("name"));
+            details.put("email", claims.get("email"));
+            return details;
+        }
+        // Fallback to OAuth2
+        if (principal instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) principal;
+            return oauth2Token.getPrincipal().getAttributes();
+        }
+        return new HashMap<>();
     }
 }
