@@ -187,7 +187,7 @@ const AppNavbar = () => {
               GitHub
             </NavLink>
           </NavItem>
-          <NavItem>{userProfileDropdown}</NavItem>
+          {userProfileDropdown}
         </Nav>
       </Collapse>
     </Navbar>
