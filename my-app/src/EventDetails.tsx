@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
 import AppNavbar from "./AppNavbar";
-import type { Event, Group, User } from "./types";
+import type { Event } from "./types";
 
 // Helper function to get the JWT from localStorage
 const getJwtToken = () => {
