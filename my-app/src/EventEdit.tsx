@@ -90,7 +90,7 @@ const EventEdit = () => {
       });
 
     // If editing existing event, fetch event data
-    if (id !== "new") {
+    if (id && id !== "new") {
       fetch(`${apiUrl}/api/events/${id}`, {
         headers: createAuthHeaders(),
       })
