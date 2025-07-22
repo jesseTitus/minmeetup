@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import AppNavbar from "./AppNavbar";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button, Container, Row, Col } from "reactstrap";
 import EventCalendar from "./EventCalendar";
 
@@ -63,7 +63,6 @@ const decodeJwtPayload = (token: string) => {
 };
 
 const Home = () => {
-  // const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
