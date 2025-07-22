@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Collapse,
   Nav,
@@ -13,70 +13,14 @@ import {
   DropdownItem,
 } from "reactstrap";
 import { Link } from "react-router-dom";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  profilePictureUrl?: string;
-}
-
-// Helper function to get the JWT from localStorage
-const getJwtToken = () => {
-  return localStorage.getItem("jwt_token");
-};
-
-// Helper to decode JWT payload
-const decodeJwtPayload = (token: string) => {
-  try {
-    const payload = token.split(".")[1];
-    return JSON.parse(atob(payload));
-  } catch (error) {
-    console.error("Error decoding JWT:", error);
-    return null;
-  }
-};
-
-// Helper to check if JWT is expired
-const isJwtExpired = (token: string) => {
-  const payload = decodeJwtPayload(token);
-  if (!payload || !payload.exp) return true;
-  return Date.now() >= payload.exp * 1000;
-};
+import { useAuth } from "./hooks/useAuth";
 
 const AppNavbar = () => {
+  const { user, isLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<User | undefined>(undefined);
-
-  useEffect(() => {
-    setLoading(true);
-    const token = getJwtToken();
-
-    if (token && !isJwtExpired(token)) {
-      // Extract user info from JWT
-      const payload = decodeJwtPayload(token);
-      if (payload) {
-        setUser({
-          id: payload.sub,
-          name: payload.name,
-          email: payload.email,
-          profilePictureUrl: payload.picture,
-        });
-        setAuthenticated(true);
-      }
-    } else {
-      // Token is missing or expired
-      if (token) {
-        localStorage.removeItem("jwt_token");
-      }
-      setAuthenticated(false);
-      setUser(undefined);
-    }
-    setLoading(false);
-  }, []);
+  
+  const authenticated = !!user;
 
   const login = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
@@ -85,8 +29,6 @@ const AppNavbar = () => {
 
   const logout = () => {
     localStorage.removeItem("jwt_token");
-    setAuthenticated(false);
-    setUser(undefined);
     window.location.href = "/";
   };
 
@@ -121,7 +63,7 @@ const AppNavbar = () => {
     </NavItem>
   );
 
-  if (loading) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 

@@ -44,7 +44,7 @@ class GroupController {
     Collection<Group> groups(Principal principal, HttpServletRequest request) {
         String userId = getUserId(principal, request);
         Collection<Group> userGroups = groupRepository.findAllByUserId(userId);
-        
+
         // Ensure all groups have consistent images
         userGroups.forEach(group -> {
             if (group.getImageUrl() == null || group.getImageUrl().isEmpty()) {
@@ -52,28 +52,30 @@ class GroupController {
                 groupRepository.save(group);
             }
         });
-        
+
         return userGroups;
     }
 
     @GetMapping("/groups/available")
     Collection<Group> availableGroups() {
-        log.info("=== FETCHING AVAILABLE GROUPS ===");
+        // log.info("=== FETCHING AVAILABLE GROUPS ===");
         Collection<Group> groups = groupRepository.findAll();
-        log.info("Found {} groups", groups.size());
-        
+        // log.info("Found {} groups", groups.size());
+
         // Ensure all groups have consistent images
         groups.forEach(group -> {
-            log.info("Group {}: imageUrl = {}", group.getId(), group.getImageUrl());
+            // log.info("Group {}: imageUrl = {}", group.getId(), group.getImageUrl());
             if (group.getImageUrl() == null || group.getImageUrl().isEmpty()) {
                 String newImageUrl = imageService.generateRandomImageUrl(group.getId());
-                log.info("Setting new imageUrl for group {}: {}", group.getId(), newImageUrl);
+                // log.info("Setting new imageUrl for group {}: {}", group.getId(),
+                // newImageUrl);
                 group.setImageUrl(newImageUrl);
                 groupRepository.save(group);
-                log.info("Saved group {} with imageUrl: {}", group.getId(), group.getImageUrl());
+                // log.info("Saved group {} with imageUrl: {}", group.getId(),
+                // group.getImageUrl());
             }
         });
-        
+
         return groups;
     }
 
@@ -83,15 +85,15 @@ class GroupController {
         if (groupOpt.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        
+
         Group group = groupOpt.get();
-        
+
         // Ensure group has a consistent image
         if (group.getImageUrl() == null || group.getImageUrl().isEmpty()) {
             group.setImageUrl(imageService.generateRandomImageUrl(group.getId()));
             group = groupRepository.save(group);
         }
-        
+
         Map<String, Object> groupWithEvents = new java.util.HashMap<>();
         groupWithEvents.put("id", group.getId());
         groupWithEvents.put("name", group.getName());
@@ -111,7 +113,7 @@ class GroupController {
                         eventInfo.put("date", event.getDate());
                         eventInfo.put("title", event.getTitle());
                         eventInfo.put("description", event.getDescription());
-                        
+
                         // Add attendees
                         if (event.getAttendees() != null) {
                             Collection<Map<String, Object>> attendees = event.getAttendees().stream()
@@ -126,7 +128,7 @@ class GroupController {
                                     .collect(java.util.stream.Collectors.toList());
                             eventInfo.put("attendees", attendees);
                         }
-                        
+
                         return eventInfo;
                     })
                     .collect(java.util.stream.Collectors.toList());
@@ -140,10 +142,10 @@ class GroupController {
     ResponseEntity<Group> createGroup(@Valid @RequestBody Group group,
             Principal principal, HttpServletRequest request) throws URISyntaxException {
         log.info("Request to create group: {}", group);
-        
+
         String userId = getUserId(principal, request);
         Map<String, Object> userDetails = getUserDetails(principal, request);
-        
+
         // check to see if user already exists
         Optional<User> user = userRepository.findById(userId);
         User currentUser = user.orElse(new User(userId,
@@ -157,12 +159,12 @@ class GroupController {
             if (existing.getUsers().isEmpty()) {
                 // Group exists but has no users, associate it with current user
                 existing.addUser(currentUser);
-                
+
                 // Set consistent image if not already set
                 if (existing.getImageUrl() == null || existing.getImageUrl().isEmpty()) {
                     existing.setImageUrl(imageService.generateRandomImageUrl(existing.getId()));
                 }
-                
+
                 Group result = groupRepository.save(existing);
                 return ResponseEntity.ok().body(result);
             } else if (existing.hasUser(userId)) {
@@ -171,13 +173,13 @@ class GroupController {
             } else {
                 // Group belongs to another user, create a new one
                 group.addUser(currentUser);
-                
+
                 // Save first to get the generated ID
                 Group savedGroup = groupRepository.save(group);
-                
+
                 // Now assign a consistent image using the group ID as seed
                 savedGroup.setImageUrl(imageService.generateRandomImageUrl(savedGroup.getId()));
-                
+
                 // Save again with the image URL
                 Group result = groupRepository.save(savedGroup);
                 return ResponseEntity.created(new URI("/api/group/" + result.getId()))
@@ -190,7 +192,7 @@ class GroupController {
 
         // Save first to get the generated ID
         Group savedGroup = groupRepository.save(group);
-        
+
         // Now assign a consistent image using the group ID as seed
         savedGroup.setImageUrl(imageService.generateRandomImageUrl(savedGroup.getId()));
 
@@ -205,17 +207,17 @@ class GroupController {
     ResponseEntity<?> joinGroup(@PathVariable("id") Long groupId,
             Principal principal, HttpServletRequest request) {
         log.info("Request to join group: {}", groupId);
-        
+
         String userId = getUserId(principal, request);
         Map<String, Object> userDetails = getUserDetails(principal, request);
-        
+
         log.info("User ID: {}", userId);
 
         // Find or create user
         Optional<User> user = userRepository.findById(userId);
         User currentUser = user.orElse(new User(userId,
                 userDetails.get("name").toString(), userDetails.get("email").toString()));
-        
+
         // Save the user if it's new
         if (user.isEmpty()) {
             // Assign a random profile picture to the new user
@@ -253,15 +255,15 @@ class GroupController {
     ResponseEntity<Group> updateGroup(@PathVariable Long id, @Valid @RequestBody Group groupData,
             Principal principal, HttpServletRequest request) {
         log.info("Request to update group: {}", groupData);
-        
+
         // Find the existing group to preserve user associations
         Optional<Group> existingGroupOpt = groupRepository.findById(id);
         if (existingGroupOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        
+
         Group existingGroup = existingGroupOpt.get();
-        
+
         // Update only the basic group fields, preserve user associations
         existingGroup.setName(groupData.getName());
         existingGroup.setAddress(groupData.getAddress());
@@ -270,7 +272,7 @@ class GroupController {
         existingGroup.setCountry(groupData.getCountry());
         existingGroup.setPostalCode(groupData.getPostalCode());
         existingGroup.setImageUrl(groupData.getImageUrl());
-        
+
         Group result = groupRepository.save(existingGroup);
         return ResponseEntity.ok().body(result);
     }
