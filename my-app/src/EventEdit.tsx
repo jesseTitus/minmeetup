@@ -114,7 +114,7 @@ const EventEdit = () => {
               description: data.description,
               date: data.date ? data.date.substring(0, 16) : "", // Format for datetime-local input
               groupId: data.group?.id,
-              group: data.group
+              group: data.group,
             };
             setEvent(eventData);
           }
@@ -143,8 +143,9 @@ const EventEdit = () => {
     formEvent.preventDefault();
 
     // Get the groupId - prefer from event state, fallback to URL param
-    const finalGroupId = event.groupId || (groupId ? parseInt(groupId) : undefined);
-    
+    const finalGroupId =
+      event.groupId || (groupId ? parseInt(groupId) : undefined);
+
     if (!finalGroupId) {
       alert("Group ID is missing. Please try again.");
       return;
@@ -200,13 +201,13 @@ const EventEdit = () => {
     if (event.group) {
       return event.group.name;
     }
-    
+
     // If creating a new event, find the group by groupId from URL parameter
     if (groupId) {
       const foundGroup = groups.find((g) => g.id === parseInt(groupId));
       return foundGroup?.name || "Loading...";
     }
-    
+
     return "Loading...";
   };
 
@@ -250,7 +251,7 @@ const EventEdit = () => {
             />
           </FormGroup>
           <FormGroup>
-            <Label>Group</Label>
+            <div style={{ marginBottom: "0.5rem" }}>Group</div>
             <div
               style={{
                 padding: "8px 12px",
