@@ -363,7 +363,7 @@ const GroupCard = React.memo(
               <img
                 src={
                   group.imageUrl ||
-                  `https://picsum.photos/300/200?random=${group.id}`
+                  `https://picsum.photos/id/${((group.id % 1000) + 1)}/300/200`
                 }
                 alt={group.name}
                 style={{
@@ -372,7 +372,10 @@ const GroupCard = React.memo(
                   objectFit: "cover",
                 }}
                 onError={(e) => {
-                  e.currentTarget.src = `https://picsum.photos/300/200?random=${group.id}`;
+                  // Only set fallback if we don't already have a backend imageUrl
+                  if (!group.imageUrl) {
+                    e.currentTarget.src = `https://picsum.photos/id/${((group.id % 1000) + 1)}/300/200`;
+                  }
                 }}
               />
             </div>

@@ -272,7 +272,7 @@ const Home = () => {
                   <img
                     src={
                       group.imageUrl ||
-                      `https://picsum.photos/60/60?random=${group.id}`
+                      `https://picsum.photos/id/${((group.id % 1000) + 1)}/60/60`
                     }
                     alt={group.name}
                     style={{
@@ -283,7 +283,7 @@ const Home = () => {
                       margin: "0 auto 10px",
                     }}
                     onError={(e) => {
-                      e.currentTarget.src = `https://picsum.photos/60/60?random=${group.id}`;
+                      e.currentTarget.src = `https://picsum.photos/id/${((group.id % 1000) + 1)}/60/60`;
                     }}
                   />
                   <h6 style={{ margin: 0, fontSize: "14px" }}>{group.name}</h6>
@@ -510,9 +510,7 @@ const Home = () => {
                               <img
                                 src={
                                   event.group?.imageUrl ||
-                                  `https://picsum.photos/80/80?random=${
-                                    event.group?.id || 1
-                                  }`
+                                  `https://picsum.photos/id/${(((event.group?.id || 1) % 1000) + 1)}/80/80`
                                 }
                                 alt={event.group?.name || "Group"}
                                 style={{
@@ -521,9 +519,7 @@ const Home = () => {
                                   objectFit: "cover",
                                 }}
                                 onError={(e) => {
-                                  e.currentTarget.src = `https://picsum.photos/80/80?random=${
-                                    event.group?.id || 1
-                                  }`;
+                                  e.currentTarget.src = `https://picsum.photos/id/${(((event.group?.id || 1) % 1000) + 1)}/80/80`;
                                 }}
                               />
                             </div>

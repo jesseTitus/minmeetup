@@ -43,12 +43,38 @@ class GroupController {
     @GetMapping("/groups")
     Collection<Group> groups(Principal principal, HttpServletRequest request) {
         String userId = getUserId(principal, request);
-        return groupRepository.findAllByUserId(userId);
+        Collection<Group> userGroups = groupRepository.findAllByUserId(userId);
+        
+        // Ensure all groups have consistent images
+        userGroups.forEach(group -> {
+            if (group.getImageUrl() == null || group.getImageUrl().isEmpty()) {
+                group.setImageUrl(imageService.generateRandomImageUrl(group.getId()));
+                groupRepository.save(group);
+            }
+        });
+        
+        return userGroups;
     }
 
     @GetMapping("/groups/available")
     Collection<Group> availableGroups() {
-        return groupRepository.findAll();
+        log.info("=== FETCHING AVAILABLE GROUPS ===");
+        Collection<Group> groups = groupRepository.findAll();
+        log.info("Found {} groups", groups.size());
+        
+        // Ensure all groups have consistent images
+        groups.forEach(group -> {
+            log.info("Group {}: imageUrl = {}", group.getId(), group.getImageUrl());
+            if (group.getImageUrl() == null || group.getImageUrl().isEmpty()) {
+                String newImageUrl = imageService.generateRandomImageUrl(group.getId());
+                log.info("Setting new imageUrl for group {}: {}", group.getId(), newImageUrl);
+                group.setImageUrl(newImageUrl);
+                groupRepository.save(group);
+                log.info("Saved group {} with imageUrl: {}", group.getId(), group.getImageUrl());
+            }
+        });
+        
+        return groups;
     }
 
     @GetMapping("/groups/{id}")
@@ -59,6 +85,13 @@ class GroupController {
         }
         
         Group group = groupOpt.get();
+        
+        // Ensure group has a consistent image
+        if (group.getImageUrl() == null || group.getImageUrl().isEmpty()) {
+            group.setImageUrl(imageService.generateRandomImageUrl(group.getId()));
+            group = groupRepository.save(group);
+        }
+        
         Map<String, Object> groupWithEvents = new java.util.HashMap<>();
         groupWithEvents.put("id", group.getId());
         groupWithEvents.put("name", group.getName());
@@ -124,6 +157,12 @@ class GroupController {
             if (existing.getUsers().isEmpty()) {
                 // Group exists but has no users, associate it with current user
                 existing.addUser(currentUser);
+                
+                // Set consistent image if not already set
+                if (existing.getImageUrl() == null || existing.getImageUrl().isEmpty()) {
+                    existing.setImageUrl(imageService.generateRandomImageUrl(existing.getId()));
+                }
+                
                 Group result = groupRepository.save(existing);
                 return ResponseEntity.ok().body(result);
             } else if (existing.hasUser(userId)) {
@@ -132,7 +171,15 @@ class GroupController {
             } else {
                 // Group belongs to another user, create a new one
                 group.addUser(currentUser);
-                Group result = groupRepository.save(group);
+                
+                // Save first to get the generated ID
+                Group savedGroup = groupRepository.save(group);
+                
+                // Now assign a consistent image using the group ID as seed
+                savedGroup.setImageUrl(imageService.generateRandomImageUrl(savedGroup.getId()));
+                
+                // Save again with the image URL
+                Group result = groupRepository.save(savedGroup);
                 return ResponseEntity.created(new URI("/api/group/" + result.getId()))
                         .body(result);
             }
@@ -141,10 +188,14 @@ class GroupController {
         // No existing group found, create new one
         group.addUser(currentUser);
 
-        // Assign a random image to the group
-        group.setImageUrl(imageService.generateRandomImageUrl());
+        // Save first to get the generated ID
+        Group savedGroup = groupRepository.save(group);
+        
+        // Now assign a consistent image using the group ID as seed
+        savedGroup.setImageUrl(imageService.generateRandomImageUrl(savedGroup.getId()));
 
-        Group result = groupRepository.save(group);
+        // Save again with the image URL
+        Group result = groupRepository.save(savedGroup);
         return ResponseEntity.created(new URI("/api/group/" + result.getId()))
                 .body(result);
     }

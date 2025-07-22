@@ -27,8 +27,14 @@ class Initializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... strings) {
-        Stream.of("Seattle JUG", "Denver JUG", "Dublin JUG",
-                "London JUG").forEach(name -> repository.save(new Group(name)));
+        // Create initial groups
+        Stream.of("Seattle JUG", "Denver JUG", "Dublin JUG", "London JUG")
+                .forEach(name -> {
+                    Group group = new Group(name);
+                    group = repository.save(group); // Save to get ID
+                    group.setImageUrl(imageService.generateRandomImageUrl(group.getId())); // Set consistent image
+                    repository.save(group); // Save with image
+                });
 
         Group djug = repository.findByName("Seattle JUG")
                 .orElseThrow(() -> new IllegalStateException("Seattle JUG group not found after initialization!"));
