@@ -5,7 +5,7 @@ const AuthCallback = () => {
     const getTokenAndRedirect = async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL;
-        
+
         // Get JWT token from backend using session cookie
         const response = await fetch(`${apiUrl}/api/auth/token`, {
           method: "POST",
@@ -15,12 +15,12 @@ const AuthCallback = () => {
         if (response.ok) {
           const data = await response.json();
           const token = data.token;
-          
+
           // Store JWT in localStorage
           localStorage.setItem("jwt_token", token);
-          
-          // Redirect to groups page
-          window.location.href = "/groups";
+
+          // Redirect to home page
+          window.location.href = "/";
         } else {
           console.error("Failed to get JWT token");
           // Redirect to login if token fetch fails
@@ -43,4 +43,4 @@ const AuthCallback = () => {
   );
 };
 
-export default AuthCallback; 
+export default AuthCallback;

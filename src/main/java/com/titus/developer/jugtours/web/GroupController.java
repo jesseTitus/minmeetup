@@ -24,6 +24,9 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -77,6 +80,80 @@ class GroupController {
         });
 
         return groups;
+    }
+
+    @GetMapping("/groups/{id}/events/paginated")
+    ResponseEntity<Map<String, Object>> getGroupEventsPaginated(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
+        Optional<Group> groupOpt = groupRepository.findById(id);
+        if (groupOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Group group = groupOpt.get();
+        
+        // Get events for this group and convert to list
+        List<Map<String, Object>> eventList = new ArrayList<>();
+        if (group.getEvents() != null) {
+            eventList = group.getEvents().stream()
+                .map(event -> {
+                    Map<String, Object> eventWithGroup = new HashMap<>();
+                    eventWithGroup.put("id", event.getId());
+                    eventWithGroup.put("date", event.getDate());
+                    eventWithGroup.put("title", event.getTitle());
+                    eventWithGroup.put("description", event.getDescription());
+
+                    // Add group info
+                    Map<String, Object> groupInfo = new HashMap<>();
+                    groupInfo.put("id", group.getId());
+                    groupInfo.put("name", group.getName());
+                    groupInfo.put("address", group.getAddress());
+                    groupInfo.put("city", group.getCity());
+                    groupInfo.put("stateOrProvince", group.getStateOrProvince());
+                    groupInfo.put("country", group.getCountry());
+                    groupInfo.put("postalCode", group.getPostalCode());
+                    groupInfo.put("imageUrl", group.getImageUrl());
+                    eventWithGroup.put("group", groupInfo);
+
+                    // Add attendees
+                    if (event.getAttendees() != null) {
+                        List<Map<String, Object>> attendees = event.getAttendees().stream()
+                            .map(attendee -> {
+                                Map<String, Object> attendeeInfo = new HashMap<>();
+                                attendeeInfo.put("id", attendee.getId());
+                                attendeeInfo.put("name", attendee.getName());
+                                attendeeInfo.put("email", attendee.getEmail());
+                                attendeeInfo.put("profilePictureUrl", attendee.getProfilePictureUrl());
+                                return attendeeInfo;
+                            })
+                            .collect(Collectors.toList());
+                        eventWithGroup.put("attendees", attendees);
+                    }
+
+                    return eventWithGroup;
+                })
+                .sorted((e1, e2) -> ((java.time.Instant) e1.get("date")).compareTo((java.time.Instant) e2.get("date")))
+                .collect(Collectors.toList());
+        }
+
+        // Manual pagination
+        int start = page * size;
+        int end = Math.min(start + size, eventList.size());
+        List<Map<String, Object>> pageContent = start < eventList.size() ? 
+            eventList.subList(start, end) : List.of();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageContent);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", eventList.size());
+        response.put("totalPages", (int) Math.ceil((double) eventList.size() / size));
+        response.put("hasNext", end < eventList.size());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/groups/{id}")

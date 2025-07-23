@@ -178,7 +178,7 @@ const EventEdit = () => {
 
       if (response.ok) {
         setEvent(initialFormState);
-        navigate(`/groups/${finalGroupId}/events`);
+        navigate(`/events/${event.id}`);
       } else {
         console.error(
           "Error saving event:",
@@ -267,7 +267,7 @@ const EventEdit = () => {
             <Button color="primary" type="submit">
               Save
             </Button>{" "}
-            <Button color="secondary" tag={Link} to="/groups">
+            <Button color="secondary" tag={Link} to={`/events/${event.id}`}>
               Cancel
             </Button>
           </FormGroup>

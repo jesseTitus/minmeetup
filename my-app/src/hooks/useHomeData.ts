@@ -26,7 +26,11 @@ export const useHomeData = (): UseHomeDataReturn => {
     loadMore: loadMoreEvents, 
     hasMore: hasMoreEvents,
     totalCount: allEventsCount 
-  } = usePaginatedEvents({ createAuthHeaders, handleAuthError });
+  } = usePaginatedEvents({ 
+    createAuthHeaders, 
+    handleAuthError, 
+    apiUrl: '/api/events/available' 
+  });
 
   useEffect(() => {
     if (!user) return;

@@ -35,6 +35,7 @@ export const useInfiniteScroll = (fetchMore: () => void): UseInfiniteScrollRetur
 interface UsePaginatedEventsProps {
   createAuthHeaders: () => HeadersInit;
   handleAuthError: (response: Response) => void;
+  apiUrl?: string; // Make API URL configurable
 }
 
 interface PaginatedEventsReturn {
@@ -47,7 +48,8 @@ interface PaginatedEventsReturn {
 
 export const usePaginatedEvents = ({ 
   createAuthHeaders, 
-  handleAuthError 
+  handleAuthError,
+  apiUrl = '/api/events/available' // Default to all events
 }: UsePaginatedEventsProps): PaginatedEventsReturn => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,11 +61,11 @@ export const usePaginatedEvents = ({
     if (loading || !hasMore) return;
 
     setLoading(true);
-    const apiUrl = import.meta.env.VITE_API_URL;
+    const baseUrl = import.meta.env.VITE_API_URL;
     
     try {
       const response = await fetch(
-        `${apiUrl}/api/events/available?page=${currentPage}&size=40`,
+        `${baseUrl}${apiUrl}?page=${currentPage}&size=20`,
         { headers: createAuthHeaders() }
       );
 
@@ -83,7 +85,7 @@ export const usePaginatedEvents = ({
     } finally {
       setLoading(false);
     }
-  }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError]);
+  }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError, apiUrl]);
 
   // Load initial data
   useEffect(() => {
