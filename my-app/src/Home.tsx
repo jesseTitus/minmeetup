@@ -19,7 +19,6 @@ const Home = () => {
     groups,
     events,
     loading: dataLoading,
-    allGroupEvents,
     allAvailableEvents,
     loadMoreEvents,
     hasMoreEvents,
