@@ -29,8 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.springframework.context.annotation.Import;
 import com.titus.developer.jugtours.TestSecurityConfig;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 
 @SpringBootTest(properties = {
@@ -97,6 +95,7 @@ class EventControllerIntegrationTest {
     @Test
     void testGetAvailableEvents() throws Exception {
         mockMvc.perform(get("/api/events/available")
+                .param("size", "9999")
                 .contentType(MediaType.APPLICATION_JSON)
                 .with(oauth2Login().attributes(attrs -> {
                     attrs.put("sub", "test-user");
@@ -105,10 +104,37 @@ class EventControllerIntegrationTest {
                 })))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isNotEmpty())
-                .andExpect(jsonPath("$[?(@.title == 'Test Event')]").exists())
-                .andExpect(jsonPath("$[?(@.title == 'Test Event')].description").value("Test Event Description"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isNotEmpty())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(9999))
+                .andExpect(jsonPath("$.totalElements").exists())
+                .andExpect(jsonPath("$.totalPages").exists())
+                .andExpect(jsonPath("$.hasNext").exists())
+                .andExpect(jsonPath("$.content[?(@.title == 'Test Event')]").exists())
+                .andExpect(
+                        jsonPath("$.content[?(@.title == 'Test Event')].description").value("Test Event Description"));
+    }
+
+    @Test
+    void testGetAvailableEventsWithPagination() throws Exception {
+        mockMvc.perform(get("/api/events/available")
+                .param("page", "0")
+                .param("size", "5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "test-user");
+                    attrs.put("name", "Test User");
+                    attrs.put("email", "testuser@example.com");
+                })))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.totalElements").exists())
+                .andExpect(jsonPath("$.totalPages").exists())
+                .andExpect(jsonPath("$.hasNext").exists());
     }
 
     @Test
