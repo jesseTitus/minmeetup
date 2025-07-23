@@ -45,11 +45,7 @@ class Initializer implements CommandLineRunner {
                 "Kamloops", "Saint-Jean-sur-Richelieu", "Niagara Falls", "Cape Breton", "Chilliwack", "Victoria",
                 "Brossard", "Maple Ridge", "North Vancouver", "Newmarket",
                 "Repentigny", "Peterborough", "Saint-Jérôme", "Moncton", "Drummondville", "Kawartha Lakes",
-                "New Westminster", "Prince George", "Caledon", "Airdrie",
-                "Wood Buffalo", "Sault Ste. Marie", "Sarnia", "Saint John", "Granby", "St. Albert", "Norfolk County",
-                "Grande Prairie", "Medicine Hat", "Fredericton",
-                "Halton Hills", "Aurora", "Port Coquitlam", "Mirabel", "Blainville", "Saint-Hyacinthe", "Welland",
-                "Belleville", "North Bay");
+                "New Westminster", "Prince George", "Caledon");
 
         // Create John as the user who will attend all events
         User john = new User(

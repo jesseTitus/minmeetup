@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import type { Group, Event } from '../types';
 import { useAuth } from './useAuth';
+import { usePaginatedEvents } from './useInfiniteScroll';
 
 interface UseHomeDataReturn {
   groups: Group[];
   events: Event[];
   loading: boolean;
   allGroupEvents: Event[];
+  allAvailableEvents: Event[];
+  loadMoreEvents: () => void;
+  hasMoreEvents: boolean;
+  allEventsCount: number;
 }
 
 export const useHomeData = (): UseHomeDataReturn => {
@@ -14,6 +19,14 @@ export const useHomeData = (): UseHomeDataReturn => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Use paginated events for "All Events" tab
+  const { 
+    events: paginatedEvents, 
+    loadMore: loadMoreEvents, 
+    hasMore: hasMoreEvents,
+    totalCount: allEventsCount 
+  } = usePaginatedEvents({ createAuthHeaders, handleAuthError });
 
   useEffect(() => {
     if (!user) return;
@@ -30,7 +43,7 @@ export const useHomeData = (): UseHomeDataReturn => {
       .then(async ([groupsResponse, eventsResponse]) => {
         if (!groupsResponse.ok) {
           handleAuthError(groupsResponse);
-          throw new Error("Failed to fetch groups");
+          throw new Error("Failed to fetch user groups");
         }
         if (!eventsResponse.ok) {
           handleAuthError(eventsResponse);
@@ -66,10 +79,17 @@ export const useHomeData = (): UseHomeDataReturn => {
       : []
   );
 
+  // Use paginated events as allAvailableEvents
+  const allAvailableEvents = paginatedEvents;
+
   return {
     groups,
     events,
     loading,
     allGroupEvents,
+    allAvailableEvents,
+    loadMoreEvents,
+    hasMoreEvents,
+    allEventsCount,
   };
 }; 

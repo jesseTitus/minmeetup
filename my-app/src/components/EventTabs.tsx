@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface EventTabsProps {
   activeTab: "all" | "user";
@@ -7,12 +7,7 @@ interface EventTabsProps {
   userEventsCount: number;
 }
 
-const EventTabs: React.FC<EventTabsProps> = ({
-  activeTab,
-  onTabChange,
-  allEventsCount,
-  userEventsCount,
-}) => {
+const EventTabs: React.FC<EventTabsProps> = ({ activeTab, onTabChange }) => {
   return (
     <div style={{ marginBottom: "20px" }}>
       <div
@@ -38,7 +33,7 @@ const EventTabs: React.FC<EventTabsProps> = ({
             fontSize: "16px",
           }}
         >
-          All Events ({allEventsCount})
+          Events
         </button>
         <button
           onClick={() => onTabChange("user")}
@@ -56,11 +51,11 @@ const EventTabs: React.FC<EventTabsProps> = ({
             fontSize: "16px",
           }}
         >
-          Your Events ({userEventsCount})
+          Your Events
         </button>
       </div>
     </div>
   );
 };
 
-export default EventTabs; 
+export default EventTabs;

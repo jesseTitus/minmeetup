@@ -10,6 +10,7 @@ import EventTabs from "./components/EventTabs";
 import EventList from "./components/EventList";
 import { useAuth } from "./hooks/useAuth";
 import { useHomeData } from "./hooks/useHomeData";
+import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
 import type { Event } from "./types";
 
 const Home = () => {
@@ -19,14 +20,26 @@ const Home = () => {
     events,
     loading: dataLoading,
     allGroupEvents,
+    allAvailableEvents,
+    loadMoreEvents,
+    hasMoreEvents,
+    allEventsCount,
   } = useHomeData();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "user">("all");
 
   const loading = authLoading || dataLoading;
 
+  // Infinite scroll for "All Events" tab
+  const { isFetching, setIsFetching } = useInfiniteScroll(() => {
+    if (activeTab === "all" && hasMoreEvents) {
+      loadMoreEvents();
+      setIsFetching(false);
+    }
+  });
+
   // Choose which events to display based on active tab
-  const eventsToDisplay = activeTab === "all" ? allGroupEvents : events;
+  const eventsToDisplay = activeTab === "all" ? allAvailableEvents : events;
 
   // Filter events based on selected date
   const filteredEvents = selectedDate
@@ -53,7 +66,7 @@ const Home = () => {
 
   const message = user ? (
     <h3 style={{ textAlign: "left", fontWeight: "bold" }}>
-      Welcome, {getFirstName()}
+      Welcome, {getFirstName()} 👋
     </h3>
   ) : (
     <p>Please log in to manage your JUG Tour.</p>
@@ -117,11 +130,33 @@ const Home = () => {
                   <EventTabs
                     activeTab={activeTab}
                     onTabChange={handleTabChange}
-                    allEventsCount={allGroupEvents.length}
+                    allEventsCount={allEventsCount}
                     userEventsCount={events.length}
                   />
 
                   <EventList events={filteredEvents} />
+
+                  {/* Loading indicator for infinite scroll */}
+                  {activeTab === "all" && isFetching && (
+                    <div style={{ textAlign: "center", padding: "20px" }}>
+                      <p>Loading more events...</p>
+                    </div>
+                  )}
+
+                  {/* End of events indicator */}
+                  {activeTab === "all" &&
+                    !hasMoreEvents &&
+                    filteredEvents.length > 0 && (
+                      <div
+                        style={{
+                          textAlign: "center",
+                          padding: "20px",
+                          color: "#666",
+                        }}
+                      >
+                        <p>You've reached the end! No more events to load.</p>
+                      </div>
+                    )}
                 </div>
               </Col>
             </Row>

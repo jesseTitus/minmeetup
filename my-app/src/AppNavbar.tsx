@@ -19,7 +19,9 @@ const AppNavbar = () => {
   const { user, isLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchLocation, setSearchLocation] = useState("London, ON");
+
   const authenticated = !!user;
 
   const login = () => {
@@ -105,6 +107,107 @@ const AppNavbar = () => {
           }}
         />
       </NavbarBrand>
+
+      {/* Search Bar - only show when authenticated */}
+      {authenticated && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginLeft: "auto",
+            marginRight: "auto",
+            maxWidth: "600px",
+            flex: 1,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "8px",
+              border: "1px solid #e0e0e0",
+              overflow: "hidden",
+              width: "100%",
+              height: "48px",
+            }}
+          >
+            {/* Search Icon */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                paddingLeft: "12px",
+                paddingRight: "8px",
+                color: "#6c757d",
+              }}
+            >
+              🔍
+            </div>
+
+            {/* Search Input */}
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search events"
+              style={{
+                border: "none",
+                outline: "none",
+                backgroundColor: "transparent",
+                padding: "0 8px",
+                fontSize: "16px",
+                color: "#495057",
+                flex: 1,
+                minWidth: "200px",
+              }}
+            />
+
+            {/* Divider */}
+            <div
+              style={{
+                width: "1px",
+                backgroundColor: "#dee2e6",
+                margin: "8px 0",
+              }}
+            />
+
+            {/* Location Input */}
+            <input
+              type="text"
+              value={searchLocation}
+              onChange={(e) => setSearchLocation(e.target.value)}
+              style={{
+                border: "none",
+                outline: "none",
+                backgroundColor: "transparent",
+                padding: "0 12px",
+                fontSize: "16px",
+                color: "#495057",
+                width: "120px",
+                textAlign: "center",
+              }}
+            />
+
+            {/* Search Button */}
+            <button
+              style={{
+                border: "none",
+                backgroundColor: "#5978E3",
+                color: "white",
+                padding: "0 20px",
+                cursor: "pointer",
+                fontSize: "16px",
+                height: "100%",
+                borderRadius: "0 7px 7px 0",
+              }}
+            >
+              🔍
+            </button>
+          </div>
+        </div>
+      )}
+
       <NavbarToggler
         onClick={() => {
           setIsOpen(!isOpen);

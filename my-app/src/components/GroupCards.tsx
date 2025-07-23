@@ -1,14 +1,17 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Row, Col } from 'reactstrap';
-import type { Group } from '../types';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Row, Col } from "reactstrap";
+import type { Group } from "../types";
 
 interface GroupCardsProps {
   groups: Group[];
   maxDisplayed?: number;
 }
 
-const GroupCards: React.FC<GroupCardsProps> = ({ groups, maxDisplayed = 4 }) => {
+const GroupCards: React.FC<GroupCardsProps> = ({
+  groups,
+  maxDisplayed = 4,
+}) => {
   if (groups.length === 0) {
     return null;
   }
@@ -26,18 +29,6 @@ const GroupCards: React.FC<GroupCardsProps> = ({ groups, maxDisplayed = 4 }) => 
         }}
       >
         <h4 style={{ margin: 0 }}>Your Groups</h4>
-        {groups.length > maxDisplayed && (
-          <Link
-            to="/groups"
-            style={{
-              fontSize: "14px",
-              color: "#007bff",
-              textDecoration: "none",
-            }}
-          >
-            See all your groups ({groups.length})
-          </Link>
-        )}
       </div>
       <Row>
         {displayedGroups.map((group: Group) => (
@@ -67,14 +58,13 @@ const GroupCards: React.FC<GroupCardsProps> = ({ groups, maxDisplayed = 4 }) => 
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 4px rgba(0,0,0,0.1)";
+                  e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
                 }}
               >
                 <img
                   src={
                     group.imageUrl ||
-                    `https://picsum.photos/id/${((group.id % 1000) + 1)}/60/60`
+                    `https://picsum.photos/id/${(group.id % 1000) + 1}/60/60`
                   }
                   alt={group.name}
                   style={{
@@ -85,7 +75,9 @@ const GroupCards: React.FC<GroupCardsProps> = ({ groups, maxDisplayed = 4 }) => 
                     margin: "0 auto 10px",
                   }}
                   onError={(e) => {
-                    e.currentTarget.src = `https://picsum.photos/id/${((group.id % 1000) + 1)}/60/60`;
+                    e.currentTarget.src = `https://picsum.photos/id/${
+                      (group.id % 1000) + 1
+                    }/60/60`;
                   }}
                 />
                 <h6 style={{ margin: 0, fontSize: "14px" }}>{group.name}</h6>
@@ -98,4 +90,4 @@ const GroupCards: React.FC<GroupCardsProps> = ({ groups, maxDisplayed = 4 }) => 
   );
 };
 
-export default GroupCards; 
+export default GroupCards;

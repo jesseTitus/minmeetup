@@ -26,6 +26,8 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -89,31 +91,70 @@ class EventController {
     }
 
     @GetMapping("events/available")
-    Collection<Map<String, Object>> availableEvents() {
+    ResponseEntity<Map<String, Object>> availableEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
         Collection<Event> allEvents = eventRepository.findAll();
-        return allEvents.stream().map(event -> {
-            Map<String, Object> eventWithGroup = new java.util.HashMap<>();
-            eventWithGroup.put("id", event.getId());
-            eventWithGroup.put("date", event.getDate());
-            eventWithGroup.put("title", event.getTitle());
-            eventWithGroup.put("description", event.getDescription());
+        
+        // Convert to list and sort by date
+        List<Map<String, Object>> eventList = allEvents.stream()
+            .map(event -> {
+                Map<String, Object> eventWithGroup = new HashMap<>();
+                eventWithGroup.put("id", event.getId());
+                eventWithGroup.put("date", event.getDate());
+                eventWithGroup.put("title", event.getTitle());
+                eventWithGroup.put("description", event.getDescription());
 
-            if (event.getGroup() != null) {
-                Map<String, Object> groupInfo = new java.util.HashMap<>();
-                groupInfo.put("id", event.getGroup().getId());
-                groupInfo.put("name", event.getGroup().getName());
-                groupInfo.put("address", event.getGroup().getAddress());
-                groupInfo.put("city", event.getGroup().getCity());
-                groupInfo.put("stateOrProvince", event.getGroup().getStateOrProvince());
-                groupInfo.put("country", event.getGroup().getCountry());
-                groupInfo.put("postalCode", event.getGroup().getPostalCode());
-                groupInfo.put("imageUrl", event.getGroup().getImageUrl());
+                if (event.getGroup() != null) {
+                    Map<String, Object> groupInfo = new HashMap<>();
+                    groupInfo.put("id", event.getGroup().getId());
+                    groupInfo.put("name", event.getGroup().getName());
+                    groupInfo.put("address", event.getGroup().getAddress());
+                    groupInfo.put("city", event.getGroup().getCity());
+                    groupInfo.put("stateOrProvince", event.getGroup().getStateOrProvince());
+                    groupInfo.put("country", event.getGroup().getCountry());
+                    groupInfo.put("postalCode", event.getGroup().getPostalCode());
+                    groupInfo.put("imageUrl", event.getGroup().getImageUrl());
 
-                eventWithGroup.put("group", groupInfo);
-            }
+                    eventWithGroup.put("group", groupInfo);
+                }
 
-            return eventWithGroup;
-        }).collect(java.util.stream.Collectors.toList());
+                // Add attendees
+                if (event.getAttendees() != null) {
+                    List<Map<String, Object>> attendees = event.getAttendees().stream()
+                        .map(attendee -> {
+                            Map<String, Object> attendeeInfo = new HashMap<>();
+                            attendeeInfo.put("id", attendee.getId());
+                            attendeeInfo.put("name", attendee.getName());
+                            attendeeInfo.put("email", attendee.getEmail());
+                            attendeeInfo.put("profilePictureUrl", attendee.getProfilePictureUrl());
+                            return attendeeInfo;
+                        })
+                        .collect(Collectors.toList());
+                    eventWithGroup.put("attendees", attendees);
+                }
+
+                return eventWithGroup;
+            })
+            .sorted((e1, e2) -> ((java.time.Instant) e1.get("date")).compareTo((java.time.Instant) e2.get("date")))
+            .collect(Collectors.toList());
+
+        // Manual pagination
+        int start = page * size;
+        int end = Math.min(start + size, eventList.size());
+        List<Map<String, Object>> pageContent = start < eventList.size() ? 
+            eventList.subList(start, end) : List.of();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageContent);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", eventList.size());
+        response.put("totalPages", (int) Math.ceil((double) eventList.size() / size));
+        response.put("hasNext", end < eventList.size());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/events/{id}")
