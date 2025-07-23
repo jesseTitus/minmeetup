@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Stream;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 class Initializer implements CommandLineRunner {
@@ -27,61 +28,85 @@ class Initializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... strings) {
-        // Create initial groups
-        Stream.of("Seattle JUG", "Denver JUG", "Dublin JUG", "London JUG")
-                .forEach(name -> {
-                    Group group = new Group(name);
-                    group = repository.save(group); // Save to get ID
-                    group.setImageUrl(imageService.generateRandomImageUrl(group.getId())); // Set consistent image
-                    repository.save(group); // Save with image
-                });
+        // List of 100 Canadian cities
+        List<String> cities = Arrays.asList(
+                "Toronto", "Montreal", "Calgary", "Ottawa", "Edmonton", "Winnipeg", "Mississauga", "Vancouver",
+                "Brampton", "Hamilton",
+                "Surrey", "Quebec City", "Halifax", "Laval", "London", "Markham", "Vaughan", "Gatineau", "Saskatoon",
+                "Kitchener",
+                "Longueuil", "Burnaby", "Windsor", "Regina", "Oakville", "Richmond", "Richmond Hill", "Burlington",
+                "Oshawa", "Sherbrooke",
+                "Greater Sudbury", "Abbotsford", "Lévis", "Coquitlam", "Barrie", "Saguenay", "Kelowna", "Guelph",
+                "Trois-Rivières", "Whitby",
+                "Cambridge", "St. Catharines", "Milton", "Langley", "Kingston", "Ajax", "Waterloo", "Terrebonne",
+                "Saanich", "St. John's",
+                "Thunder Bay", "Delta", "Brantford", "Chatham-Kent", "Clarington", "Red Deer", "Nanaimo",
+                "Strathcona County", "Pickering", "Lethbridge",
+                "Kamloops", "Saint-Jean-sur-Richelieu", "Niagara Falls", "Cape Breton", "Chilliwack", "Victoria",
+                "Brossard", "Maple Ridge", "North Vancouver", "Newmarket",
+                "Repentigny", "Peterborough", "Saint-Jérôme", "Moncton", "Drummondville", "Kawartha Lakes",
+                "New Westminster", "Prince George", "Caledon", "Airdrie",
+                "Wood Buffalo", "Sault Ste. Marie", "Sarnia", "Saint John", "Granby", "St. Albert", "Norfolk County",
+                "Grande Prairie", "Medicine Hat", "Fredericton",
+                "Halton Hills", "Aurora", "Port Coquitlam", "Mirabel", "Blainville", "Saint-Hyacinthe", "Welland",
+                "Belleville", "North Bay");
 
-        Group djug = repository.findByName("Seattle JUG")
-                .orElseThrow(() -> new IllegalStateException("Seattle JUG group not found after initialization!"));
-
-        // Set location for Weekly Java Meetup at Grad Club, UWO
-        djug.setAddress("Grad Club");
-        djug.setCity("London");
-        djug.setStateOrProvince("ON");
-        djug.setCountry("Canada");
-        djug.setPostalCode("N6A 3K7");
-
-        // Create an example user who is a member of Seattle JUG and attends all events
-        User exampleUser = new User(
-                "example-user-123",
+        // Create John as the user who will attend all events
+        User john = new User(
+                "john-smith-123",
                 "John Smith",
                 "john.smith@example.com");
-        exampleUser.setProfilePictureUrl(imageService.generateRandomProfilePictureUrl("example-user-123"));
-        userRepository.save(exampleUser);
+        john.setProfilePictureUrl(imageService.generateRandomProfilePictureUrl("john-smith-123"));
+        userRepository.save(john);
 
-        // Create 20 events, each 1 day apart starting from current date
-        Set<Event> events = new HashSet<>();
-        LocalDateTime startDate = LocalDateTime.now();
+        System.out.println("Creating " + cities.size() + " groups with 52 events each...");
 
-        for (int i = 0; i < 20; i++) {
-            LocalDateTime eventDate = startDate.plusDays(i);
-            Event event = Event.builder()
-                    .title("Weekly Java Meetup")
-                    .description(
-                            "Join us for our weekly Java meetup where we discuss the latest in Java development, share knowledge, and network with fellow developers.")
-                    .date(eventDate.toInstant(ZoneOffset.UTC))
-                    .group(djug)
-                    .build();
+        // Create groups for each city
+        for (String cityName : cities) {
+            Group group = new Group(cityName + " JUG");
 
-            // Add the example user as an attendee to each event
-            event.addAttendee(exampleUser);
-            events.add(event);
+            // Set location fields to "-" as requested
+            group.setAddress("-");
+            group.setCity("-");
+            group.setStateOrProvince("-");
+            group.setCountry("-");
+            group.setPostalCode("-");
+
+            group = repository.save(group); // Save to get ID
+            group.setImageUrl(imageService.generateRandomImageUrl(group.getId())); // Set consistent image
+
+            // Add John to this group
+            group.addUser(john);
+
+            // Create 52 events (weekly for a year)
+            Set<Event> events = new HashSet<>();
+            LocalDateTime startDate = LocalDateTime.now();
+
+            for (int week = 0; week < 52; week++) {
+                LocalDateTime eventDate = startDate.plusWeeks(week);
+                Event event = Event.builder()
+                        .title(cityName + " Weekly Java User Meetup")
+                        .description(
+                                "Join us for our weekly Java meetup in " + cityName
+                                        + " where we discuss the latest in Java development, share knowledge, and network with fellow developers.")
+                        .date(eventDate.toInstant(ZoneOffset.UTC))
+                        .group(group)
+                        .build();
+
+                // Add John as an attendee to each event
+                event.addAttendee(john);
+                events.add(event);
+            }
+
+            group.setEvents(events);
+            repository.save(group);
+
+            // System.out.println("Created group: " + group.getName() + " with " +
+            // events.size() + " events");
         }
 
-        djug.setEvents(events);
-
-        // Add the example user to the Seattle JUG group
-        djug.addUser(exampleUser);
-
-        // Save everything in one transaction
-        repository.save(djug);
-
-        // System.out.println("Created example user: " + exampleUser.getName());
-        repository.findAll().forEach(System.out::println);
+        System.out.println("Initialization complete! Created " + cities.size() + " groups with " + (cities.size() * 52)
+                + " total events.");
+        System.out.println("John Smith is attending all events across all groups.");
     }
 }
