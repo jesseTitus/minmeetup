@@ -2,7 +2,7 @@ import { useAuth } from './useAuth';
 import { usePaginatedEvents } from './useInfiniteScroll';
 
 export const useGroupEvents = (groupId: string | undefined) => {
-  const { createAuthHeaders, handleAuthError } = useAuth();
+  const { createAuthHeaders, handleAuthError, user } = useAuth();
   
   const apiUrl = groupId ? `/api/groups/${groupId}/events/paginated` : '';
   
@@ -21,7 +21,7 @@ export const useGroupEvents = (groupId: string | undefined) => {
   return {
     events,
     loading,
-    hasMore: hasMore && !!groupId, // Don't allow loading more if no groupId
+    hasMore: hasMore && !!groupId && !!user, // Don't allow loading more if no groupId or no user
     loadMore,
     totalCount
   };

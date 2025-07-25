@@ -14,7 +14,7 @@ const EventList = () => {
   const [groupLoading, setGroupLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
   const navigate = useNavigate();
-  const { createAuthHeaders, handleAuthError } = useAuth();
+  const { createAuthHeaders, handleAuthError, user } = useAuth();
 
   // Use the new group events hook for pagination
   const { 
@@ -25,9 +25,9 @@ const EventList = () => {
     totalCount 
   } = useGroupEvents(groupId);
 
-  // Infinite scroll for events
+  // Infinite scroll for events (only when authenticated)
   const { isFetching, setIsFetching } = useInfiniteScroll(() => {
-    if (hasMore) {
+    if (hasMore && user) {
       loadMore();
       setIsFetching(false);
     }
@@ -153,15 +153,15 @@ const EventList = () => {
           <div style={{ marginLeft: "20px", marginRight: "10%" }}>
             <EventListComponent events={events} />
             
-            {/* Loading indicator for infinite scroll */}
-            {isFetching && (
+            {/* Loading indicator for infinite scroll - only when authenticated */}
+            {user && isFetching && (
               <div style={{ textAlign: "center", padding: "20px" }}>
                 <p>Loading more events...</p>
               </div>
             )}
             
-            {/* End of events indicator */}
-            {!hasMore && events.length > 0 && (
+            {/* End of events indicator - only when authenticated */}
+            {user && !hasMore && events.length > 0 && (
               <div style={{ textAlign: "center", padding: "20px", color: "#666" }}>
                 <p>You've reached the end! No more events to load.</p>
               </div>

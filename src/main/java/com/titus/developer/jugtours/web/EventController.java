@@ -167,6 +167,25 @@ class EventController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("events/calendar-dates")
+    ResponseEntity<Map<String, Object>> getCalendarDates() {
+        Collection<Event> allEvents = eventRepository.findAll();
+        
+        // Group events by date and count them
+        Map<String, Integer> dateCountMap = new HashMap<>();
+        
+        for (Event event : allEvents) {
+            String dateKey = event.getDate().toString().substring(0, 10); // YYYY-MM-DD format
+            dateCountMap.put(dateKey, dateCountMap.getOrDefault(dateKey, 0) + 1);
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("eventDates", dateCountMap);
+        response.put("totalEvents", allEvents.size());
+        
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/events/{id}")
     ResponseEntity<?> getEvent(@PathVariable Long id) {
         Optional<Event> eventOpt = eventRepository.findById(id);

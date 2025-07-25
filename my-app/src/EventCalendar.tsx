@@ -11,28 +11,41 @@ interface Event {
 }
 
 interface EventCalendarProps {
-  events: Event[];
+  events: Event[]; // Still used for other functionality
+  calendarDates?: { [date: string]: number }; // New: all event dates with counts
   onDateSelect?: (date: Date | null) => void;
 }
 
-const EventCalendar: React.FC<EventCalendarProps> = ({ events, onDateSelect }) => {
+const EventCalendar: React.FC<EventCalendarProps> = ({ 
+  events, 
+  calendarDates = {}, 
+  onDateSelect 
+}) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Create a Set of dates that have events (for efficient lookup)
+  // Create a Set of dates that have events using calendarDates if available, otherwise fallback to events
   const eventDates = new Set(
-    events.map((event) => {
-      const date = new Date(event.date);
-      return date.toDateString(); // Use toDateString() for date-only comparison
-    })
+    Object.keys(calendarDates).length > 0
+      ? Object.keys(calendarDates).map((dateString) => {
+          const date = new Date(dateString + 'T00:00:00'); // Parse YYYY-MM-DD format
+          return date.toDateString();
+        })
+      : events.map((event) => {
+          const date = new Date(event.date);
+          return date.toDateString();
+        })
   );
+
+  
 
   // Custom tile content to show dots on days with events
   const tileContent = ({ date, view }: { date: Date; view: string }) => {
     if (view === "month") {
       const dateString = date.toDateString();
       if (eventDates.has(dateString)) {
+        
         return (
-          <div className="event-dot" title="You have an event on this day">
+          <div className="event-dot" >
             •
           </div>
         );
@@ -94,14 +107,6 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ events, onDateSelect }) =
         </div>
       )}
 
-      {events.length > 0 && (
-        <div className="calendar-legend">
-          <div className="legend-item">
-            <span className="event-dot">•</span>
-            <span>Days with events</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

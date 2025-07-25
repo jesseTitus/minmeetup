@@ -57,8 +57,22 @@ export const usePaginatedEvents = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
+  // Check if user has a valid token
+  const hasValidToken = () => {
+    const token = localStorage.getItem("jwt_token");
+    if (!token) return false;
+    
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const now = Date.now() / 1000;
+      return payload.exp > now; // Check if token is not expired
+    } catch {
+      return false;
+    }
+  };
+
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
+    if (loading || !hasMore || !hasValidToken()) return;
 
     setLoading(true);
     const baseUrl = import.meta.env.VITE_API_URL;
@@ -87,9 +101,9 @@ export const usePaginatedEvents = ({
     }
   }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError, apiUrl]);
 
-  // Load initial data
+  // Load initial data only if user is authenticated
   useEffect(() => {
-    if (currentPage === 0 && events.length === 0) {
+    if (currentPage === 0 && events.length === 0 && hasValidToken()) {
       loadMore();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

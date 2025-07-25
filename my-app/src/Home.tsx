@@ -11,6 +11,7 @@ import EventList from "./components/EventList";
 import { useAuth } from "./hooks/useAuth";
 import { useHomeData } from "./hooks/useHomeData";
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
+import { useCalendarDates } from "./hooks/useCalendarDates";
 import type { Event } from "./types";
 
 const Home = () => {
@@ -24,14 +25,15 @@ const Home = () => {
     hasMoreEvents,
     allEventsCount,
   } = useHomeData();
+  const { eventDates: calendarDates } = useCalendarDates();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "user">("all");
 
   const loading = authLoading || dataLoading;
 
-  // Infinite scroll for "All Events" tab
+  // Infinite scroll for "All Events" tab (only when authenticated)
   const { isFetching, setIsFetching } = useInfiniteScroll(() => {
-    if (activeTab === "all" && hasMoreEvents) {
+    if (activeTab === "all" && hasMoreEvents && user) {
       loadMoreEvents();
       setIsFetching(false);
     }
@@ -103,6 +105,7 @@ const Home = () => {
               <Col md={3}>
                 <EventCalendar
                   events={eventsToDisplay}
+                  calendarDates={calendarDates}
                   onDateSelect={handleDateSelect}
                 />
 
@@ -135,15 +138,16 @@ const Home = () => {
 
                   <EventList events={filteredEvents} />
 
-                  {/* Loading indicator for infinite scroll */}
-                  {activeTab === "all" && isFetching && (
+                  {/* Loading indicator for infinite scroll - only when authenticated */}
+                  {activeTab === "all" && user && isFetching && (
                     <div style={{ textAlign: "center", padding: "20px" }}>
                       <p>Loading more events...</p>
                     </div>
                   )}
 
-                  {/* End of events indicator */}
+                  {/* End of events indicator - only when authenticated */}
                   {activeTab === "all" &&
+                    user &&
                     !hasMoreEvents &&
                     filteredEvents.length > 0 && (
                       <div
