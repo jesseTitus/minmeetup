@@ -148,6 +148,7 @@ const AppNavbar = () => {
             {/* Search Input */}
             <input
               type="text"
+              name="searchQuery"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search events"
@@ -175,6 +176,7 @@ const AppNavbar = () => {
             {/* Location Input */}
             <input
               type="text"
+              name="searchLocation"
               value={searchLocation}
               onChange={(e) => setSearchLocation(e.target.value)}
               style={{
