@@ -28,12 +28,16 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api")
 class EventController {
 
-    private final Logger log = LoggerFactory.getLogger(EventController.class);
+    private static final Logger log = LoggerFactory.getLogger(EventController.class);
     private EventRepository eventRepository;
     private GroupRepository groupRepository;
     private UserRepository userRepository;
@@ -94,65 +98,71 @@ class EventController {
     ResponseEntity<Map<String, Object>> availableEvents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
-        Collection<Event> allEvents = eventRepository.findAll();
-        
-        // Convert to list and sort by date
-        List<Map<String, Object>> eventList = allEvents.stream()
-            .map(event -> {
-                Map<String, Object> eventWithGroup = new HashMap<>();
-                eventWithGroup.put("id", event.getId());
-                eventWithGroup.put("date", event.getDate());
-                eventWithGroup.put("title", event.getTitle());
-                eventWithGroup.put("description", event.getDescription());
 
-                if (event.getGroup() != null) {
-                    Map<String, Object> groupInfo = new HashMap<>();
-                    groupInfo.put("id", event.getGroup().getId());
-                    groupInfo.put("name", event.getGroup().getName());
-                    groupInfo.put("address", event.getGroup().getAddress());
-                    groupInfo.put("city", event.getGroup().getCity());
-                    groupInfo.put("stateOrProvince", event.getGroup().getStateOrProvince());
-                    groupInfo.put("country", event.getGroup().getCountry());
-                    groupInfo.put("postalCode", event.getGroup().getPostalCode());
-                    groupInfo.put("imageUrl", event.getGroup().getImageUrl());
+        long startTime = System.currentTimeMillis();
+        log.info("Fetching events - Page: {}, Size: {}", page, size);
 
-                    eventWithGroup.put("group", groupInfo);
-                }
+        // Use Spring Data Pageable for database-level pagination
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").ascending());
+        Page<Event> eventPage = eventRepository.findAll(pageable);
 
-                // Add attendees
-                if (event.getAttendees() != null) {
-                    List<Map<String, Object>> attendees = event.getAttendees().stream()
-                        .map(attendee -> {
-                            Map<String, Object> attendeeInfo = new HashMap<>();
-                            attendeeInfo.put("id", attendee.getId());
-                            attendeeInfo.put("name", attendee.getName());
-                            attendeeInfo.put("email", attendee.getEmail());
-                            attendeeInfo.put("profilePictureUrl", attendee.getProfilePictureUrl());
-                            return attendeeInfo;
-                        })
-                        .collect(Collectors.toList());
-                    eventWithGroup.put("attendees", attendees);
-                }
+        long dbTime = System.currentTimeMillis();
+        log.info("Database query took: {}ms, returned {} events",
+                dbTime - startTime, eventPage.getContent().size());
 
-                return eventWithGroup;
-            })
-            .sorted((e1, e2) -> ((java.time.Instant) e1.get("date")).compareTo((java.time.Instant) e2.get("date")))
-            .collect(Collectors.toList());
+        // Only process the events returned by the database (20 events, not all)
+        List<Map<String, Object>> eventList = eventPage.getContent().stream()
+                .map(event -> {
+                    Map<String, Object> eventWithGroup = new HashMap<>();
+                    eventWithGroup.put("id", event.getId());
+                    eventWithGroup.put("date", event.getDate());
+                    eventWithGroup.put("title", event.getTitle());
+                    eventWithGroup.put("description", event.getDescription());
 
-        // Manual pagination
-        int start = page * size;
-        int end = Math.min(start + size, eventList.size());
-        List<Map<String, Object>> pageContent = start < eventList.size() ? 
-            eventList.subList(start, end) : List.of();
+                    if (event.getGroup() != null) {
+                        Map<String, Object> groupInfo = new HashMap<>();
+                        groupInfo.put("id", event.getGroup().getId());
+                        groupInfo.put("name", event.getGroup().getName());
+                        groupInfo.put("address", event.getGroup().getAddress());
+                        groupInfo.put("city", event.getGroup().getCity());
+                        groupInfo.put("stateOrProvince", event.getGroup().getStateOrProvince());
+                        groupInfo.put("country", event.getGroup().getCountry());
+                        groupInfo.put("postalCode", event.getGroup().getPostalCode());
+                        groupInfo.put("imageUrl", event.getGroup().getImageUrl());
+
+                        eventWithGroup.put("group", groupInfo);
+                    }
+
+                    // Add attendees
+                    if (event.getAttendees() != null) {
+                        List<Map<String, Object>> attendees = event.getAttendees().stream()
+                                .map(attendee -> {
+                                    Map<String, Object> attendeeInfo = new HashMap<>();
+                                    attendeeInfo.put("id", attendee.getId());
+                                    attendeeInfo.put("name", attendee.getName());
+                                    attendeeInfo.put("email", attendee.getEmail());
+                                    attendeeInfo.put("profilePictureUrl", attendee.getProfilePictureUrl());
+                                    return attendeeInfo;
+                                })
+                                .collect(Collectors.toList());
+                        eventWithGroup.put("attendees", attendees);
+                    }
+
+                    return eventWithGroup;
+                })
+                .collect(Collectors.toList());
 
         Map<String, Object> response = new HashMap<>();
-        response.put("content", pageContent);
-        response.put("page", page);
-        response.put("size", size);
-        response.put("totalElements", eventList.size());
-        response.put("totalPages", (int) Math.ceil((double) eventList.size() / size));
-        response.put("hasNext", end < eventList.size());
+        response.put("content", eventList);
+        response.put("page", eventPage.getNumber());
+        response.put("size", eventPage.getSize());
+        response.put("totalElements", eventPage.getTotalElements());
+        response.put("totalPages", eventPage.getTotalPages());
+        response.put("hasNext", eventPage.hasNext());
+
+        long totalTime = System.currentTimeMillis() - startTime;
+        log.info("Request completed in {}ms - Sent {} events to client",
+                totalTime, eventList.size());
 
         return ResponseEntity.ok(response);
     }
