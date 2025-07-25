@@ -14,10 +14,6 @@ interface UseHomeDataReturn {
   allEventsCount: number;
 }
 
-interface UseHomeDataProps {
-  selectedDate?: Date | null;
-}
-
 export const useHomeData = (selectedDate?: Date | null): UseHomeDataReturn => {
   const { user, createAuthHeaders, handleAuthError } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
