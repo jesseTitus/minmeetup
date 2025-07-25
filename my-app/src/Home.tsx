@@ -16,6 +16,9 @@ import type { Event } from "./types";
 
 const Home = () => {
   const { user, isLoading: authLoading } = useAuth();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [activeTab, setActiveTab] = useState<"all" | "user">("all");
+  
   const {
     groups,
     events,
@@ -24,26 +27,29 @@ const Home = () => {
     loadMoreEvents,
     hasMoreEvents,
     allEventsCount,
-  } = useHomeData();
+  } = useHomeData(selectedDate);
   const { eventDates: calendarDates } = useCalendarDates();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "user">("all");
 
   const loading = authLoading || dataLoading;
 
   // Infinite scroll for "All Events" tab (only when authenticated)
   const { isFetching, setIsFetching } = useInfiniteScroll(() => {
     if (activeTab === "all" && hasMoreEvents && user) {
+      console.log('Home: Calling loadMoreEvents, hasMoreEvents:', hasMoreEvents);
       loadMoreEvents();
+      setIsFetching(false);
+    } else {
+      console.log('Home: Not loading more - activeTab:', activeTab, 'hasMoreEvents:', hasMoreEvents, 'user:', !!user);
       setIsFetching(false);
     }
   });
 
   // Choose which events to display based on active tab
+  // Date filtering is now handled at the API level for "all" events
   const eventsToDisplay = activeTab === "all" ? allAvailableEvents : events;
 
-  // Filter events based on selected date
-  const filteredEvents = selectedDate
+  // For "user" events, still filter by date on frontend since they use a different endpoint
+  const filteredEvents = activeTab === "user" && selectedDate
     ? eventsToDisplay.filter((event: Event) => {
         const eventDate = new Date(event.date);
         return eventDate.toDateString() === selectedDate.toDateString();

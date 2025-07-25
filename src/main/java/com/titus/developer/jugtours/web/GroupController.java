@@ -1,5 +1,6 @@
 package com.titus.developer.jugtours.web;
 
+import com.titus.developer.jugtours.model.Event;
 import com.titus.developer.jugtours.model.Group;
 import com.titus.developer.jugtours.model.GroupRepository;
 import com.titus.developer.jugtours.model.User;
@@ -26,6 +27,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 @RestController
@@ -86,7 +88,8 @@ class GroupController {
     ResponseEntity<Map<String, Object>> getGroupEventsPaginated(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String date) {
         
         Optional<Group> groupOpt = groupRepository.findById(id);
         if (groupOpt.isEmpty()) {
@@ -98,7 +101,24 @@ class GroupController {
         // Get events for this group and convert to list
         List<Map<String, Object>> eventList = new ArrayList<>();
         if (group.getEvents() != null) {
-            eventList = group.getEvents().stream()
+            Collection<Event> groupEvents = group.getEvents();
+            
+            // Filter by date if provided (events on or after the selected date)
+            if (date != null && !date.trim().isEmpty()) {
+                groupEvents = groupEvents.stream()
+                    .filter(event -> {
+                        try {
+                            java.time.LocalDate filterDate = java.time.LocalDate.parse(date);
+                            java.time.LocalDate eventDate = event.getDate().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                            return !eventDate.isBefore(filterDate); // On or after selected date
+                        } catch (Exception e) {
+                            return false; // Skip events with invalid dates
+                        }
+                    })
+                    .collect(Collectors.toList());
+            }
+            
+            eventList = groupEvents.stream()
                 .map(event -> {
                     Map<String, Object> eventWithGroup = new HashMap<>();
                     eventWithGroup.put("id", event.getId());

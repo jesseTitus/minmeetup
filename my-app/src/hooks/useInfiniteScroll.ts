@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface UseInfiniteScrollReturn {
   isFetching: boolean;
@@ -16,6 +16,7 @@ export const useInfiniteScroll = (fetchMore: () => void): UseInfiniteScrollRetur
         document.documentElement.offsetHeight - 1000 && 
         !isFetching
       ) {
+        console.log('Infinite scroll triggered');
         setIsFetching(true);
       }
     };
@@ -36,6 +37,7 @@ interface UsePaginatedEventsProps {
   createAuthHeaders: () => HeadersInit;
   handleAuthError: (response: Response) => void;
   apiUrl?: string; // Make API URL configurable
+  selectedDate?: Date | null; // Add date filter
 }
 
 interface PaginatedEventsReturn {
@@ -49,13 +51,15 @@ interface PaginatedEventsReturn {
 export const usePaginatedEvents = ({ 
   createAuthHeaders, 
   handleAuthError,
-  apiUrl = '/api/events/available' // Default to all events
+  apiUrl = '/api/events/available', // Default to all events
+  selectedDate = null // Date filter
 }: UsePaginatedEventsProps): PaginatedEventsReturn => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [needsLoad, setNeedsLoad] = useState(false);
 
   // Check if user has a valid token
   const hasValidToken = () => {
@@ -74,12 +78,23 @@ export const usePaginatedEvents = ({
   const loadMore = useCallback(async () => {
     if (loading || !hasMore || !hasValidToken()) return;
 
+    console.log('Loading more events - Page:', currentPage, 'Date filter:', selectedDate);
     setLoading(true);
     const baseUrl = import.meta.env.VITE_API_URL;
     
+    // Build query parameters
+    const params = new URLSearchParams();
+    params.append('page', currentPage.toString());
+    params.append('size', '20');
+    
+    if (selectedDate) {
+      const dateStr = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      params.append('date', dateStr);
+    }
+    
     try {
       const response = await fetch(
-        `${baseUrl}${apiUrl}?page=${currentPage}&size=20`,
+        `${baseUrl}${apiUrl}?${params.toString()}`,
         { headers: createAuthHeaders() }
       );
 
@@ -90,6 +105,7 @@ export const usePaginatedEvents = ({
 
       const data = await response.json();
       
+      console.log('Received events:', data.content.length, 'Total:', data.totalElements, 'Has more:', data.hasNext);
       setEvents(prev => [...prev, ...data.content]);
       setHasMore(data.hasNext);
       setCurrentPage(prev => prev + 1);
@@ -99,14 +115,32 @@ export const usePaginatedEvents = ({
     } finally {
       setLoading(false);
     }
-  }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError, apiUrl]);
+  }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError, apiUrl, selectedDate]);
 
-  // Load initial data only if user is authenticated
+  // Reset pagination when selectedDate changes
   useEffect(() => {
-    if (currentPage === 0 && events.length === 0 && hasValidToken()) {
+    console.log('Date filter changed, resetting pagination:', selectedDate);
+    setEvents([]);
+    setCurrentPage(0);
+    setHasMore(true);
+    setTotalCount(0);
+    setNeedsLoad(true); // Trigger a load after reset
+  }, [selectedDate]);
+
+  // Load data when needed
+  useEffect(() => {
+    if (needsLoad && hasValidToken() && !loading) {
+      setNeedsLoad(false);
       loadMore();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [needsLoad, loadMore, loading]);
+
+  // Load initial data on mount
+  useEffect(() => {
+    if (currentPage === 0 && events.length === 0 && hasValidToken() && !needsLoad) {
+      setNeedsLoad(true);
+    }
+  }, []); // Empty dependency array for initial load only
 
   return {
     events,

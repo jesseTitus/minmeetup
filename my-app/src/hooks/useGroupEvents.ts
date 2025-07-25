@@ -1,7 +1,7 @@
 import { useAuth } from './useAuth';
 import { usePaginatedEvents } from './useInfiniteScroll';
 
-export const useGroupEvents = (groupId: string | undefined) => {
+export const useGroupEvents = (groupId: string | undefined, selectedDate?: Date | null) => {
   const { createAuthHeaders, handleAuthError, user } = useAuth();
   
   const apiUrl = groupId ? `/api/groups/${groupId}/events/paginated` : '';
@@ -15,7 +15,8 @@ export const useGroupEvents = (groupId: string | undefined) => {
   } = usePaginatedEvents({
     createAuthHeaders,
     handleAuthError,
-    apiUrl
+    apiUrl,
+    selectedDate
   });
 
   return {

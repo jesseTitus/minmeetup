@@ -14,7 +14,11 @@ interface UseHomeDataReturn {
   allEventsCount: number;
 }
 
-export const useHomeData = (): UseHomeDataReturn => {
+interface UseHomeDataProps {
+  selectedDate?: Date | null;
+}
+
+export const useHomeData = (selectedDate?: Date | null): UseHomeDataReturn => {
   const { user, createAuthHeaders, handleAuthError } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -29,7 +33,8 @@ export const useHomeData = (): UseHomeDataReturn => {
   } = usePaginatedEvents({ 
     createAuthHeaders, 
     handleAuthError, 
-    apiUrl: '/api/events/available' 
+    apiUrl: '/api/events/available',
+    selectedDate 
   });
 
   useEffect(() => {

@@ -97,21 +97,51 @@ class EventController {
     @GetMapping("events/available")
     ResponseEntity<Map<String, Object>> availableEvents(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String date) {
 
         long startTime = System.currentTimeMillis();
-        log.info("Fetching events - Page: {}, Size: {}", page, size);
+        log.info("Fetching events - Page: {}, Size: {}, Date filter: {}", page, size, date);
 
-        // Use Spring Data Pageable for database-level pagination
-        Pageable pageable = PageRequest.of(page, size, Sort.by("date").ascending());
-        Page<Event> eventPage = eventRepository.findAll(pageable);
+        Collection<Event> allEvents;
+        long totalElements;
+        
+        if (date != null && !date.trim().isEmpty()) {
+            // When filtering by date, get all events and filter in memory (for minimal change)
+            allEvents = eventRepository.findAll();
+            allEvents = allEvents.stream()
+                .filter(event -> {
+                    try {
+                        java.time.LocalDate filterDate = java.time.LocalDate.parse(date);
+                        java.time.LocalDate eventDate = event.getDate().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                        return !eventDate.isBefore(filterDate); // On or after selected date
+                    } catch (Exception e) {
+                        return false; // Skip events with invalid dates
+                    }
+                })
+                .sorted((e1, e2) -> e1.getDate().compareTo(e2.getDate()))
+                .collect(Collectors.toList());
+            totalElements = allEvents.size();
+            
+            // Manual pagination for filtered results
+            int start = page * size;
+            int end = Math.min(start + size, allEvents.size());
+            allEvents = start < allEvents.size() ? 
+                ((List<Event>) allEvents).subList(start, end) : List.of();
+        } else {
+            // Use efficient database pagination when no date filter
+            Pageable pageable = PageRequest.of(page, size, Sort.by("date").ascending());
+            Page<Event> eventPage = eventRepository.findAll(pageable);
+            allEvents = eventPage.getContent();
+            totalElements = eventPage.getTotalElements();
+        }
 
         long dbTime = System.currentTimeMillis();
         log.info("Database query took: {}ms, returned {} events",
-                dbTime - startTime, eventPage.getContent().size());
+                dbTime - startTime, allEvents.size());
 
-        // Only process the events returned by the database (20 events, not all)
-        List<Map<String, Object>> eventList = eventPage.getContent().stream()
+        // Process the events (either from pagination or filtering)
+        List<Map<String, Object>> eventList = allEvents.stream()
                 .map(event -> {
                     Map<String, Object> eventWithGroup = new HashMap<>();
                     eventWithGroup.put("id", event.getId());
@@ -154,11 +184,11 @@ class EventController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", eventList);
-        response.put("page", eventPage.getNumber());
-        response.put("size", eventPage.getSize());
-        response.put("totalElements", eventPage.getTotalElements());
-        response.put("totalPages", eventPage.getTotalPages());
-        response.put("hasNext", eventPage.hasNext());
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", totalElements);
+        response.put("totalPages", (int) Math.ceil((double) totalElements / size));
+        response.put("hasNext", (page + 1) * size < totalElements);
 
         long totalTime = System.currentTimeMillis() - startTime;
         log.info("Request completed in {}ms - Sent {} events to client",
