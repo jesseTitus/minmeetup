@@ -177,8 +177,12 @@ const EventEdit = () => {
       }
 
       if (response.ok) {
+        const savedEvent = await response.json();
         setEvent(initialFormState);
-        navigate(`/events/${event.id}`);
+
+        // For new events, use the ID from the response; for updates, use existing ID
+        const eventId = savedEvent.id || event.id;
+        navigate(`/events/${eventId}`);
       } else {
         console.error(
           "Error saving event:",
@@ -267,7 +271,15 @@ const EventEdit = () => {
             <Button color="primary" type="submit">
               Save
             </Button>{" "}
-            <Button color="secondary" tag={Link} to={`/events/${event.id}`}>
+            <Button
+              color="secondary"
+              tag={Link}
+              to={
+                event.id
+                  ? `/events/${event.id}`
+                  : `/groups/${event.groupId || groupId}/events`
+              }
+            >
               Cancel
             </Button>
           </FormGroup>
