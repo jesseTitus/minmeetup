@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Row, Col } from "reactstrap";
 import type { Group } from "../types";
 
 interface GroupCardsProps {
