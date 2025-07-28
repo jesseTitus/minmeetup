@@ -6,10 +6,9 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
-import java.util.Collection;
 
 /**
- * Filter that adds SameSite=None; Secure attributes to CSRF cookies 
+ * Filter that adds SameSite=None; Secure attributes to CSRF cookies
  * in production environments only. Localhost behavior unchanged.
  */
 @Component
@@ -19,13 +18,13 @@ public class SameSiteCookieFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        
+
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        
+
         // Wrap response to intercept Set-Cookie headers
         SameSiteResponseWrapper wrapper = new SameSiteResponseWrapper(httpResponse, httpRequest);
-        
+
         chain.doFilter(request, wrapper);
     }
 
@@ -65,4 +64,4 @@ public class SameSiteCookieFilter implements Filter {
             return !("localhost".equals(serverName) || "127.0.0.1".equals(serverName));
         }
     }
-} 
+}

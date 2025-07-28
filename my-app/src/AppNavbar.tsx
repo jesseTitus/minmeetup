@@ -12,11 +12,12 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 
 const AppNavbar = () => {
   const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,6 +36,18 @@ const AppNavbar = () => {
   };
 
   const toggleDropdown = () => setDropdownOpen((prevState) => !prevState);
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/events/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   // const toggle = () => setIsOpen(!isOpen);
 
@@ -151,6 +164,7 @@ const AppNavbar = () => {
               name="searchQuery"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Search events"
               style={{
                 border: "none",
@@ -193,6 +207,7 @@ const AppNavbar = () => {
 
             {/* Search Button */}
             <button
+              onClick={handleSearch}
               style={{
                 border: "none",
                 backgroundColor: "#5978E3",

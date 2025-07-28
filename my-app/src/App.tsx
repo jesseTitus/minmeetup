@@ -7,6 +7,7 @@ import EventList from "./EventList";
 import EventEdit from "./EventEdit";
 import EventDetails from "./EventDetails";
 import AuthCallback from "./AuthCallback";
+import EventSearch from "./EventSearch";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
         <Route path="/groups/:groupId/events/new" element={<EventEdit />} />
         <Route path="/events/:id/edit" element={<EventEdit />} />
         <Route path="/events/:id" element={<EventDetails />} />
+        <Route path="/events/search" element={<EventSearch />} />
       </Routes>
     </Router>
   );

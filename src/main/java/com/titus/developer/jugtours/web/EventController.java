@@ -11,10 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.context.annotation.Profile;
 
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -105,29 +103,30 @@ class EventController {
 
         Collection<Event> allEvents;
         long totalElements;
-        
+
         if (date != null && !date.trim().isEmpty()) {
-            // When filtering by date, get all events and filter in memory (for minimal change)
+            // When filtering by date, get all events and filter in memory (for minimal
+            // change)
             allEvents = eventRepository.findAll();
             allEvents = allEvents.stream()
-                .filter(event -> {
-                    try {
-                        java.time.LocalDate filterDate = java.time.LocalDate.parse(date);
-                        java.time.LocalDate eventDate = event.getDate().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                        return !eventDate.isBefore(filterDate); // On or after selected date
-                    } catch (Exception e) {
-                        return false; // Skip events with invalid dates
-                    }
-                })
-                .sorted((e1, e2) -> e1.getDate().compareTo(e2.getDate()))
-                .collect(Collectors.toList());
+                    .filter(event -> {
+                        try {
+                            java.time.LocalDate filterDate = java.time.LocalDate.parse(date);
+                            java.time.LocalDate eventDate = event.getDate().atZone(java.time.ZoneId.systemDefault())
+                                    .toLocalDate();
+                            return !eventDate.isBefore(filterDate); // On or after selected date
+                        } catch (Exception e) {
+                            return false; // Skip events with invalid dates
+                        }
+                    })
+                    .sorted((e1, e2) -> e1.getDate().compareTo(e2.getDate()))
+                    .collect(Collectors.toList());
             totalElements = allEvents.size();
-            
+
             // Manual pagination for filtered results
             int start = page * size;
             int end = Math.min(start + size, allEvents.size());
-            allEvents = start < allEvents.size() ? 
-                ((List<Event>) allEvents).subList(start, end) : List.of();
+            allEvents = start < allEvents.size() ? ((List<Event>) allEvents).subList(start, end) : List.of();
         } else {
             // Use efficient database pagination when no date filter
             Pageable pageable = PageRequest.of(page, size, Sort.by("date").ascending());
@@ -200,20 +199,38 @@ class EventController {
     @GetMapping("events/calendar-dates")
     ResponseEntity<Map<String, Object>> getCalendarDates() {
         Collection<Event> allEvents = eventRepository.findAll();
-        
+
         // Group events by date and count them
         Map<String, Integer> dateCountMap = new HashMap<>();
-        
+
         for (Event event : allEvents) {
             String dateKey = event.getDate().toString().substring(0, 10); // YYYY-MM-DD format
             dateCountMap.put(dateKey, dateCountMap.getOrDefault(dateKey, 0) + 1);
         }
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("eventDates", dateCountMap);
         response.put("totalEvents", allEvents.size());
-        
+
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/events/search")
+    ResponseEntity<List<Event>> searchEvents(@RequestParam String q, Principal principal, HttpServletRequest request) {
+        log.info("Request to search events with query: {}", q);
+
+        String userId = getUserId(principal, request);
+        Map<String, Object> userDetails = getUserDetails(principal, request);
+
+        // Find or create user
+        Optional<User> user = userRepository.findById(userId);
+        user.orElse(new User(userId,
+                userDetails.get("name").toString(), userDetails.get("email").toString()));
+
+        // Search events by title (case-insensitive)
+        List<Event> searchResults = eventRepository.findByTitleContainingIgnoreCase(q.trim());
+
+        return ResponseEntity.ok(searchResults);
     }
 
     @GetMapping("/events/{id}")
@@ -272,7 +289,7 @@ class EventController {
 
         // Find or create user
         Optional<User> user = userRepository.findById(userId);
-        User currentUser = user.orElse(new User(userId,
+        user.orElse(new User(userId,
                 userDetails.get("name").toString(), userDetails.get("email").toString()));
 
         // Find the group and verify user owns it

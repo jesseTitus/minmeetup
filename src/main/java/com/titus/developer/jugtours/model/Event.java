@@ -15,7 +15,6 @@ import jakarta.persistence.ManyToOne;
 import java.time.Instant;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.persistence.Column;
 
 @Data
 @NoArgsConstructor

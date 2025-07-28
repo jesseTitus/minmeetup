@@ -1,6 +1,5 @@
 package com.titus.developer.jugtours.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -24,7 +23,7 @@ public class User {
     @Column(unique = true)
     private String email;
     private String profilePictureUrl;
-    
+
     public User(String id, String name, String email) {
         this.id = id;
         this.name = name;
