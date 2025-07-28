@@ -46,7 +46,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
   // Helper function to check if user is attending an event
   const isUserAttending = (event: Event) => {
     if (!user || !event.attendees) return false;
-    return event.attendees.some(attendee => attendee.id === user.id);
+    return event.attendees.some((attendee) => attendee.id === user.id);
   };
 
   // Remove duplicates based on event ID to fix the key error
@@ -65,7 +65,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
             <h3
               style={{
                 textAlign: "left",
-                fontSize: "24px",
+                fontSize: "20px",
                 fontWeight: "bold",
                 color: "#333",
                 margin: "0 0 10px 0",
@@ -154,7 +154,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
                   />
                 </div>
 
-                                <div style={{ flex: 1, textAlign: "left" }}>
+                <div style={{ flex: 1, textAlign: "left" }}>
                   <div
                     style={{
                       display: "flex",
@@ -165,36 +165,36 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
                   >
                     <div
                       style={{
-                        color: "#8B4513",
+                        color: "#8f725dff",
                         fontSize: "14px",
-                        fontWeight: "bold",
+                        fontWeight: "600",
                       }}
                     >
                       {(() => {
                         const formatted = new Intl.DateTimeFormat("en-US", {
                           weekday: "short",
-                          month: "short", 
+                          month: "short",
                           day: "numeric",
                           hour: "2-digit",
                           minute: "2-digit",
                         }).format(new Date(event.date));
-                        
+
                         // Split the formatted string to manipulate parts
                         // Format: "Mon, Jul 24, 7:30 AM"
                         const parts = formatted.split(", ");
                         const dayPart = parts[0].toUpperCase(); // "MON"
                         const monthDayPart = parts[1].toUpperCase(); // "JUL 24"
                         const timePart = parts[2]; // "7:30 AM"
-                        
+
                         return `${dayPart}, ${monthDayPart} • ${timePart} EDT`;
                       })()}
                     </div>
-                    
+
                     {!isUserAttending(event) && (
                       <div
                         style={{
                           fontSize: "15px",
-                          fontWeight: "bold",
+                          fontWeight: "500",
                           color: "#4c4c4c",
                         }}
                       >
@@ -205,7 +205,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
 
                   <div
                     style={{
-                      fontWeight: "bold",
+                      fontWeight: "600",
                       fontSize: "16px",
                       marginBottom: "8px",
                     }}

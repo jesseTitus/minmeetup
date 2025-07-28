@@ -1,13 +1,16 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { Event } from '../types';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import type { Event } from "../types";
 
 interface UserEventsListProps {
   events: Event[];
   maxDisplayed?: number;
 }
 
-const UserEventsList: React.FC<UserEventsListProps> = ({ events, maxDisplayed = 3 }) => {
+const UserEventsList: React.FC<UserEventsListProps> = ({
+  events,
+  maxDisplayed = 3,
+}) => {
   const navigate = useNavigate();
 
   if (events.length === 0) {
@@ -26,7 +29,7 @@ const UserEventsList: React.FC<UserEventsListProps> = ({ events, maxDisplayed = 
           marginBottom: "20px",
         }}
       >
-        <h4 style={{ margin: 0 }}>Your Upcoming Events</h4>
+        <h4 style={{ margin: 0, fontSize: "20px" }}>Your Upcoming Events</h4>
       </div>
       <div
         style={{
@@ -93,4 +96,4 @@ const UserEventsList: React.FC<UserEventsListProps> = ({ events, maxDisplayed = 
   );
 };
 
-export default UserEventsList; 
+export default UserEventsList;

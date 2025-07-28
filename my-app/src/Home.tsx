@@ -18,7 +18,7 @@ const Home = () => {
   const { user, isLoading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "user">("all");
-  
+
   const {
     groups,
     events,
@@ -35,11 +35,21 @@ const Home = () => {
   // Infinite scroll for "All Events" tab (only when authenticated)
   const { isFetching, setIsFetching } = useInfiniteScroll(() => {
     if (activeTab === "all" && hasMoreEvents && user) {
-      console.log('Home: Calling loadMoreEvents, hasMoreEvents:', hasMoreEvents);
+      console.log(
+        "Home: Calling loadMoreEvents, hasMoreEvents:",
+        hasMoreEvents
+      );
       loadMoreEvents();
       setIsFetching(false);
     } else {
-      console.log('Home: Not loading more - activeTab:', activeTab, 'hasMoreEvents:', hasMoreEvents, 'user:', !!user);
+      console.log(
+        "Home: Not loading more - activeTab:",
+        activeTab,
+        "hasMoreEvents:",
+        hasMoreEvents,
+        "user:",
+        !!user
+      );
       setIsFetching(false);
     }
   });
@@ -49,12 +59,13 @@ const Home = () => {
   const eventsToDisplay = activeTab === "all" ? allAvailableEvents : events;
 
   // For "user" events, still filter by date on frontend since they use a different endpoint
-  const filteredEvents = activeTab === "user" && selectedDate
-    ? eventsToDisplay.filter((event: Event) => {
-        const eventDate = new Date(event.date);
-        return eventDate.toDateString() === selectedDate.toDateString();
-      })
-    : eventsToDisplay;
+  const filteredEvents =
+    activeTab === "user" && selectedDate
+      ? eventsToDisplay.filter((event: Event) => {
+          const eventDate = new Date(event.date);
+          return eventDate.toDateString() === selectedDate.toDateString();
+        })
+      : eventsToDisplay;
 
   // Get user's first name
   const getFirstName = () => {
@@ -115,22 +126,29 @@ const Home = () => {
                   onDateSelect={handleDateSelect}
                 />
 
-                <GroupCards groups={groups} />
-
-                <Link
-                  to="/groups"
+                <div
                   style={{
-                    textDecoration: "none",
-                    color: "#007bff",
-                    fontSize: "14px",
-                    display: "block",
-                    marginTop: "15px",
+                    backgroundColor: "#ffc0a027",
+                    padding: "15px",
+                    borderRadius: "5px",
                   }}
                 >
-                  Find more groups
-                </Link>
+                  <UserEventsList events={events} />
+                  <GroupCards groups={groups} />
 
-                <UserEventsList events={events} />
+                  <Link
+                    to="/groups"
+                    style={{
+                      textDecoration: "none",
+                      color: "#007bff",
+                      fontSize: "14px",
+                      display: "block",
+                      marginTop: "15px",
+                    }}
+                  >
+                    Find more groups
+                  </Link>
+                </div>
               </Col>
 
               <Col md={9}>

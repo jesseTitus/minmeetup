@@ -28,37 +28,46 @@ const GroupCards: React.FC<GroupCardsProps> = ({
           marginBottom: "20px",
         }}
       >
-        <h4 style={{ margin: 0 }}>Your Groups</h4>
+        <h4 style={{ margin: 0, fontSize: "20px" }}>Your Groups</h4>
       </div>
-      <Row>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
         {displayedGroups.map((group: Group) => (
-          <Col key={group.id} sm={6} md={3} className="mb-3">
-            <Link
-              to={`/groups/${group.id}/events`}
-              style={{ textDecoration: "none", color: "inherit" }}
+          <Link
+            key={group.id}
+            to={`/groups/${group.id}/events`}
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <div
+              style={{
+                border: "1px solid #e0e0e0",
+                borderRadius: "8px",
+                padding: "15px",
+                textAlign: "center",
+                backgroundColor: "white",
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+              }}
             >
               <div
                 style={{
-                  border: "1px solid #e0e0e0",
+                  width: "60px",
+                  height: "60px",
                   borderRadius: "8px",
-                  padding: "15px",
-                  textAlign: "center",
-                  backgroundColor: "white",
-                  height: "120px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 8px rgba(0,0,0,0.15)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                  overflow: "hidden",
+                  marginRight: "15px",
+                  flexShrink: 0,
                 }}
               >
                 <img
@@ -68,11 +77,9 @@ const GroupCards: React.FC<GroupCardsProps> = ({
                   }
                   alt={group.name}
                   style={{
-                    width: "60px",
-                    height: "60px",
-                    borderRadius: "50%",
+                    width: "100%",
+                    height: "100%",
                     objectFit: "cover",
-                    margin: "0 auto 10px",
                   }}
                   onError={(e) => {
                     e.currentTarget.src = `https://picsum.photos/id/${
@@ -80,12 +87,23 @@ const GroupCards: React.FC<GroupCardsProps> = ({
                     }/60/60`;
                   }}
                 />
-                <h6 style={{ margin: 0, fontSize: "14px" }}>{group.name}</h6>
               </div>
-            </Link>
-          </Col>
+
+              <h6
+                style={{
+                  margin: 0,
+                  fontSize: "16px",
+                  fontWeight: "700",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {group.name}
+              </h6>
+            </div>
+          </Link>
         ))}
-      </Row>
+      </div>
     </div>
   );
 };
