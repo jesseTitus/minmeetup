@@ -1,33 +1,35 @@
-# Multi-stage build for Spring Boot application
-FROM maven:3.8.4-openjdk-17 AS build
+FROM openjdk:17-jdk-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy pom.xml and download dependencies
+# Copy the Maven wrapper and pom.xml
+COPY mvnw .
+COPY .mvn .mvn
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+
+# Make mvnw executable
+RUN chmod +x mvnw
+
+# Download dependencies
+RUN ./mvnw dependency:go-offline -B
 
 # Copy source code
-COPY src ./src
+COPY src src
 
 # Build the application
-RUN mvn clean package -DskipTests
+RUN ./mvnw clean package -DskipTests
 
-# Runtime stage
-FROM openjdk:17-slim
+# Create a non-root user
+RUN addgroup --system javauser && adduser --system --ingroup javauser javauser
 
-# Set working directory
-WORKDIR /app
+# Change ownership of the app directory
+RUN chown -R javauser:javauser /app
 
-# Copy the built JAR from build stage
-COPY --from=build /app/target/*.jar app.jar
+# Switch to non-root user
+USER javauser
 
 # Expose port
 EXPOSE 8080
 
-# Set environment variables
-ENV SPRING_PROFILES_ACTIVE=prod
-
 # Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"] 
+CMD ["./mvnw", "spring-boot:run"] 

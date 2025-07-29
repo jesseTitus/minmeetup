@@ -38,7 +38,8 @@ A full-stack web application for managing Java User Group (JUG) events and tours
 - **Spring Boot 3.5.3** - Java framework
 - **Spring Security** - Authentication and authorization
 - **Spring Data JPA** - Database operations
-- **H2 Database** - In-memory database
+- **PostgreSQL** - Production database
+- **H2 Database** - Development and testing database
 - **Lombok** - Boilerplate code reduction
 - **Maven** - Build tool
 
@@ -167,11 +168,74 @@ The application uses Spring Security with OAuth2 authentication:
 
 ## Database
 
-The application uses H2 in-memory database by default:
+The application supports multiple database configurations:
 
+### Local Development (Default)
+
+- **H2 Database**: In-memory database for quick local development
 - Database is automatically created on startup
 - Sample data is loaded via `Initializer.java`
 - Data persists for the duration of the application session
+
+### Docker Development Environment
+
+- **PostgreSQL**: For production-like development environment
+- Uses Docker Compose with separate containers for PostgreSQL and backend
+
+### Production Environment
+
+- **PostgreSQL**: Production database with persistent storage
+
+### Database Setup
+
+#### Option 1: H2 (Default Local Development)
+
+Simply run the application:
+
+```bash
+mvn spring-boot:run
+```
+
+#### Option 2: Docker with PostgreSQL (Recommended for Development)
+
+1. **Start both PostgreSQL and Backend**:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Or start just PostgreSQL**:
+   ```bash
+   docker-compose up -d postgres
+   ```
+   Then run your backend locally with:
+   ```bash
+   mvn spring-boot:run -Dspring.profiles.active=dev
+   ```
+
+#### Option 3: Manual PostgreSQL Setup
+
+1. Install PostgreSQL 15 or higher
+2. Create a database: `createdb jugtours_dev`
+3. Set environment variables:
+   ```bash
+   export DATABASE_URL=...
+   export DATABASE_USERNAME=...
+   export DATABASE_PASSWORD=...
+   ```
+4. Run with dev profile:
+   ```bash
+   mvn spring-boot:run -Dspring.profiles.active=dev
+   ```
+
+### Environment Variables for PostgreSQL
+
+| Variable            | Description               |
+| ------------------- | ------------------------- |
+| `DATABASE_URL`      | PostgreSQL connection URL |
+| `DATABASE_USERNAME` | Database username         |
+| `DATABASE_PASSWORD` | Database password         |
+| `DATABASE_DRIVER`   | JDBC driver class         |
 
 ## Contributing
 
