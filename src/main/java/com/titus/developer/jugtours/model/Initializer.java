@@ -28,6 +28,12 @@ class Initializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... strings) {
+        // Skip initialization if data already exists
+        if (repository.count() > 0) {
+            System.out.println("Data already exists, skipping initialization.");
+            return;
+        }
+        
         // List of 100 Canadian cities
         List<String> cities = Arrays.asList(
                 "Toronto", "Montreal", "Calgary", "Ottawa", "Edmonton", "Winnipeg", "Mississauga", "Vancouver",
