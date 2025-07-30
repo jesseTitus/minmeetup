@@ -2,32 +2,24 @@ import { useEffect } from "react";
 
 const AuthCallback = () => {
   useEffect(() => {
-    const getTokenAndRedirect = async () => {
+    const getTokenAndRedirect = () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL;
+        // Get token from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
 
-        // Get JWT token from backend using session cookie
-        const response = await fetch(`${apiUrl}/api/auth/token`, {
-          method: "POST",
-          credentials: "include", // This uses the session cookie from OAuth2
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const token = data.token;
-
+        if (token) {
           // Store JWT in localStorage
           localStorage.setItem("jwt_token", token);
-
-          // Redirect to home page
-          window.location.href = "/";
+          console.log("JWT token stored successfully");
         } else {
-          console.error("Failed to get JWT token");
-          // Redirect to login if token fetch fails
-          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          console.error("No token found in URL");
         }
+
+        // Always redirect to home page
+        window.location.href = "/";
       } catch (error) {
-        console.error("Error getting JWT token:", error);
+        console.error("Error processing auth callback:", error);
         window.location.href = "/";
       }
     };
