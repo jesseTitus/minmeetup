@@ -23,8 +23,15 @@ public class AuthController {
     }
     
     @PostMapping("/token")
-    public ResponseEntity<Map<String, String>> generateToken(@AuthenticationPrincipal OAuth2User user) {
+    public ResponseEntity<Map<String, String>> generateToken(@AuthenticationPrincipal OAuth2User user, HttpServletRequest request) {
+        System.out.println("=== TOKEN REQUEST DEBUG ===");
+        System.out.println("User: " + user);
+        System.out.println("Session ID: " + request.getSession().getId());
+        System.out.println("Referer: " + request.getHeader("referer"));
+        System.out.println("User-Agent: " + request.getHeader("user-agent"));
+        
         if (user == null) {
+            System.out.println("ERROR: OAuth2User is null - session not established");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         
