@@ -27,7 +27,9 @@ const AppNavbar = () => {
 
   const login = () => {
     const apiUrl = import.meta.env.VITE_API_URL;
-    window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+    const loginUrl = `${apiUrl}/oauth2/authorization/auth0`;
+    console.log("Redirecting to:", loginUrl);
+    window.location.href = loginUrl;
   };
 
   const logout = () => {
