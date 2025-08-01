@@ -38,6 +38,7 @@ interface UsePaginatedEventsProps {
   handleAuthError: (response: Response) => void;
   apiUrl?: string; // Make API URL configurable
   selectedDate?: Date | null; // Add date filter
+  searchQuery?: string | undefined; // Add search query parameter
 }
 
 interface PaginatedEventsReturn {
@@ -52,7 +53,8 @@ export const usePaginatedEvents = ({
   createAuthHeaders, 
   handleAuthError,
   apiUrl = '/api/events/available', // Default to all events
-  selectedDate = null // Date filter
+  selectedDate = null, // Date filter
+  searchQuery = undefined // Search query
 }: UsePaginatedEventsProps): PaginatedEventsReturn => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,6 +92,10 @@ export const usePaginatedEvents = ({
     if (selectedDate) {
       const dateStr = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
       params.append('date', dateStr);
+    }
+    
+    if (searchQuery) {
+      params.append('q', searchQuery);
     }
     
     try {

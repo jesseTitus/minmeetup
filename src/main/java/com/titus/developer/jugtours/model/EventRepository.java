@@ -21,6 +21,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findByTitleContainingIgnoreCase(String title);
 
+    Page<Event> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+
     // get events with JPA lazy loading
     // query looks like SELECT * FROM events WHERE group_id = :groupId LIMIT :size
     // OFFSET :page
