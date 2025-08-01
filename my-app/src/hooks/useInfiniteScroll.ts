@@ -121,17 +121,16 @@ export const usePaginatedEvents = ({
     } finally {
       setLoading(false);
     }
-  }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError, apiUrl, selectedDate]);
+  }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError, apiUrl, selectedDate, searchQuery]);
 
-  // Reset pagination when selectedDate changes
+  // Reset pagination when selectedDate or searchQuery changes
   useEffect(() => {
-    console.log('Date filter changed, resetting pagination:', selectedDate);
     setEvents([]);
     setCurrentPage(0);
     setHasMore(true);
     setTotalCount(0);
     setNeedsLoad(true); // Trigger a load after reset
-  }, [selectedDate]);
+  }, [selectedDate, searchQuery]);
 
   // Load data when needed
   useEffect(() => {
