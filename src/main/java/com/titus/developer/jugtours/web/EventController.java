@@ -216,21 +216,39 @@ class EventController {
     }
 
     @GetMapping("/events/search")
-    ResponseEntity<List<Event>> searchEvents(@RequestParam String q, Principal principal, HttpServletRequest request) {
-        log.info("Request to search events with query: {}", q);
+    ResponseEntity<Map<String, Object>> searchEventsPaginated(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Principal principal, HttpServletRequest request) {
+        log.info("Request to search events with query: '{}', page: {}, size: {}", q, page, size);
 
-        String userId = getUserId(principal, request);
-        Map<String, Object> userDetails = getUserDetails(principal, request);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").ascending());
+        Page<Event> searchResults = eventRepository.findByTitleContainingIgnoreCase(q.trim(), pageable);
+        
+        log.info("Search returned {} results out of {} total", searchResults.getContent().size(), searchResults.getTotalElements());
 
-        // Find or create user
-        Optional<User> user = userRepository.findById(userId);
-        user.orElse(new User(userId,
-                userDetails.get("name").toString(), userDetails.get("email").toString()));
+        // return pagination metadata like group endpoint does
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", searchResults.getContent());
+        response.put("page", page);
+        response.put("totalElements", searchResults.getTotalElements());
+        response.put("hasNext", searchResults.hasNext());
+
+        return ResponseEntity.ok(response);
+        // String userId = getUserId(principal, request);
+        // Map<String, Object> userDetails = getUserDetails(principal, request);
+
+        // // Find or create user
+        // Optional<User> user = userRepository.findById(userId);
+        // user.orElse(new User(userId,
+        // userDetails.get("name").toString(), userDetails.get("email").toString()));
 
         // Search events by title (case-insensitive)
-        List<Event> searchResults = eventRepository.findByTitleContainingIgnoreCase(q.trim());
+        // List<Event> searchResults =
+        // eventRepository.findByTitleContainingIgnoreCase(q.trim());
 
-        return ResponseEntity.ok(searchResults);
+        // return ResponseEntity.ok(searchResults);
     }
 
     @GetMapping("/events/{id}")

@@ -1,57 +1,42 @@
-import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Container, Row, Col } from "reactstrap";
 import AppNavbar from "./AppNavbar";
 import EventList from "./components/EventList";
 import { useAuth } from "./hooks/useAuth";
-import type { Event } from "./types";
+import {
+  usePaginatedEvents,
+  useInfiniteScroll,
+} from "./hooks/useInfiniteScroll";
 
 const EventSearch = () => {
   const { user, createAuthHeaders, handleAuthError } = useAuth();
   const [searchParams] = useSearchParams();
-  const [searchResults, setSearchResults] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const query = searchParams.get("q") || "";
 
-  useEffect(() => {
-    const performSearch = async () => {
-      if (!query.trim() || !user) return;
+  // Use paginated events with search API
+  const {
+    events: searchResults,
+    loading,
+    hasMore,
+    loadMore,
+    totalCount,
+  } = usePaginatedEvents({
+    createAuthHeaders,
+    handleAuthError,
+    apiUrl: `/api/events/search`,
+    selectedDate: null,
+    searchQuery: query.trim(), // Pass search query separately
+  });
 
-      setLoading(true);
-      setError(null);
-
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const response = await fetch(
-          `${apiUrl}/api/events/search?q=${encodeURIComponent(query.trim())}`,
-          {
-            headers: createAuthHeaders(),
-          }
-        );
-
-        if (response.status === 401 || response.status === 403) {
-          handleAuthError(response);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error("Failed to search events");
-        }
-
-        const data = await response.json();
-        setSearchResults(data);
-      } catch (err) {
-        console.error("Search error:", err);
-        setError("Failed to search events. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    performSearch();
-  }, [query, user, createAuthHeaders, handleAuthError]);
+  // Infinite scroll hook
+  const { isFetching, setIsFetching } = useInfiniteScroll(() => {
+    if (hasMore && query.trim()) {
+      loadMore();
+      setIsFetching(false);
+    } else {
+      setIsFetching(false);
+    }
+  });
 
   if (!user) {
     return (
@@ -72,19 +57,37 @@ const EventSearch = () => {
           <Col>
             <h2>Search Results</h2>
             {query && <p>Searching for: "{query}"</p>}
-            
+
             {loading && <p>Searching...</p>}
-            
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            
-            {!loading && !error && searchResults.length === 0 && query && (
+
+            {!loading && searchResults.length === 0 && query && (
               <p>No events found matching "{query}".</p>
             )}
-            
-            {!loading && !error && searchResults.length > 0 && (
+
+            {searchResults.length > 0 && (
               <div>
-                <p>Found {searchResults.length} event(s):</p>
+                <p>Found {totalCount} event(s) total:</p>
                 <EventList events={searchResults} />
+
+                {/* Loading indicator for infinite scroll */}
+                {isFetching && (
+                  <div style={{ textAlign: "center", padding: "20px" }}>
+                    <p>Loading more events...</p>
+                  </div>
+                )}
+
+                {/* End of results indicator */}
+                {!hasMore && searchResults.length > 0 && (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "20px",
+                      color: "#666",
+                    }}
+                  >
+                    <p>You've reached the end! No more events to load.</p>
+                  </div>
+                )}
               </div>
             )}
           </Col>
@@ -94,4 +97,4 @@ const EventSearch = () => {
   );
 };
 
-export default EventSearch; 
+export default EventSearch;
