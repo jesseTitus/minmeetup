@@ -35,7 +35,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/", "/index.html", "/static/**",
                                 "/*.ico", "/*.json", "/*.png", "/api/auth/user")
                         .permitAll()
-                        .requestMatchers("/oauth2/**", "/login/**", "/api/auth/token").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/**", "/api/auth/token", "/api/test/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
