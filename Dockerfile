@@ -32,4 +32,4 @@ USER javauser
 EXPOSE 8080
 
 # Run the application
-CMD ["./mvnw", "spring-boot:run"] 
+CMD ["java", "-jar", "target/jugtours-0.0.1-SNAPSHOT.jar"] 
