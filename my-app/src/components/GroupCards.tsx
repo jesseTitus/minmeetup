@@ -72,7 +72,7 @@ const GroupCards: React.FC<GroupCardsProps> = ({
                 <img
                   src={
                     group.imageUrl ||
-                    `https://picsum.photos/id/${(group.id % 1000) + 1}/60/60`
+                    `https://picsum.photos/id/${(group.id % 200) + 1}/60/60`
                   }
                   alt={group.name}
                   style={{
@@ -82,7 +82,7 @@ const GroupCards: React.FC<GroupCardsProps> = ({
                   }}
                   onError={(e) => {
                     e.currentTarget.src = `https://picsum.photos/id/${
-                      (group.id % 1000) + 1
+                      (group.id % 200) + 1
                     }/60/60`;
                   }}
                 />

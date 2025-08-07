@@ -137,7 +137,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
                     src={
                       event.group?.imageUrl ||
                       `https://picsum.photos/id/${
-                        ((event.group?.id || 1) % 1000) + 1
+                        ((event.group?.id || 1) % 200) + 1
                       }/80/80`
                     }
                     alt={event.group?.name || "Group"}
@@ -148,7 +148,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
                     }}
                     onError={(e) => {
                       e.currentTarget.src = `https://picsum.photos/id/${
-                        ((event.group?.id || 1) % 1000) + 1
+                        ((event.group?.id || 1) % 200) + 1
                       }/80/80`;
                     }}
                   />
