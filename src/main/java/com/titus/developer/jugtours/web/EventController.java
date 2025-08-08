@@ -128,9 +128,9 @@ class EventController {
             int end = Math.min(start + size, allEvents.size());
             allEvents = start < allEvents.size() ? ((List<Event>) allEvents).subList(start, end) : List.of();
         } else {
-            // Use efficient database pagination when no date filter
-            Pageable pageable = PageRequest.of(page, size, Sort.by("date").ascending());
-            Page<Event> eventPage = eventRepository.findAll(pageable);
+            // Use efficient database pagination with eager loading when no date filter
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Event> eventPage = eventRepository.findAllWithGroupAndAttendees(pageable);
             allEvents = eventPage.getContent();
             totalElements = eventPage.getTotalElements();
         }

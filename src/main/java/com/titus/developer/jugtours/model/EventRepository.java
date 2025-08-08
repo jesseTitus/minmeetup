@@ -27,4 +27,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     // query looks like SELECT * FROM events WHERE group_id = :groupId LIMIT :size
     // OFFSET :page
     Page<Event> findByGroupId(Long groupId, Pageable pageable);
+
+    // Optimized query to fetch events with their groups and attendees in single query
+    @Query("SELECT DISTINCT e FROM Event e LEFT JOIN FETCH e.group LEFT JOIN FETCH e.attendees ORDER BY e.date")
+    Page<Event> findAllWithGroupAndAttendees(Pageable pageable);
 }
