@@ -80,11 +80,11 @@ class Initializer implements CommandLineRunner {
             // Add John to this group
             group.addUser(john);
 
-            // Create 52 events (weekly for a year)
+            // Create 3 events for testing
             Set<Event> events = new HashSet<>();
             LocalDateTime startDate = LocalDateTime.now();
 
-            for (int week = 0; week < 52; week++) {
+            for (int week = 0; week < 3; week++) {
                 LocalDateTime eventDate = startDate.plusWeeks(week);
                 Event event = Event.builder()
                         .title(cityName + " Weekly Java User Meetup")
@@ -107,7 +107,7 @@ class Initializer implements CommandLineRunner {
             // events.size() + " events");
         }
 
-        System.out.println("Initialization complete! Created " + cities.size() + " groups with " + (cities.size() * 52)
+        System.out.println("Initialization complete! Created " + cities.size() + " groups with " + (cities.size() * 3)
                 + " total events.");
         System.out.println("John Smith is attending all events across all groups.");
     }
