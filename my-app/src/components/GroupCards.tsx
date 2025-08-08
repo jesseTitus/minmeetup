@@ -72,7 +72,7 @@ const GroupCards: React.FC<GroupCardsProps> = ({
                 <img
                   src={
                     group.imageUrl ||
-                    `https://picsum.photos/id/${(group.id % 200) + 1}/60/60`
+                    `https://picsum.photos/60/60?random=${group.id}`
                   }
                   alt={group.name}
                   style={{
@@ -81,9 +81,7 @@ const GroupCards: React.FC<GroupCardsProps> = ({
                     objectFit: "cover",
                   }}
                   onError={(e) => {
-                    e.currentTarget.src = `https://picsum.photos/id/${
-                      (group.id % 200) + 1
-                    }/60/60`;
+                    e.currentTarget.src = `https://picsum.photos/60/60?random=${Math.floor(Math.random() * 10000)}`;
                   }}
                 />
               </div>

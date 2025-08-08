@@ -16,12 +16,10 @@ public class ImageService {
      */
     public String generateRandomImageUrl(Long seed) {
         if (seed != null) {
-            // Use the seed as the image ID directly from Picsum for consistency
-            // This ensures the same ID always returns the same image
-            long imageId = (seed % 200) + 1; // Ensure it's between 1-200
-            return String.format("https://picsum.photos/id/%d/300/200", imageId);
+            // Use seed for consistent random parameter
+            return "https://picsum.photos/300/200?random=" + (seed % 10000);
         } else {
-            return "https://picsum.photos/300/200?random=" + random.nextInt(200);
+            return "https://picsum.photos/300/200?random=" + random.nextInt(10000);
         }
     }
 
@@ -42,12 +40,11 @@ public class ImageService {
      */
     public String generateRandomProfilePictureUrl(String seed) {
         if (seed != null) {
-            // Use hash of seed to get consistent image ID
+            // Use hash of seed for consistent random parameter
             int hashCode = Math.abs(seed.hashCode());
-            long imageId = (hashCode % 200) + 1; // Ensure it's between 1-200
-            return String.format("https://picsum.photos/id/%d/50/50", imageId);
+            return "https://picsum.photos/50/50?random=" + (hashCode % 10000);
         } else {
-            return "https://picsum.photos/50/50?random=" + random.nextInt(200);
+            return "https://picsum.photos/50/50?random=" + random.nextInt(10000);
         }
     }
 

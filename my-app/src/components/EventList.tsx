@@ -136,9 +136,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
                   <img
                     src={
                       event.group?.imageUrl ||
-                      `https://picsum.photos/id/${
-                        ((event.group?.id || 1) % 200) + 1
-                      }/80/80`
+                      `https://picsum.photos/80/80?random=${event.group?.id || Math.floor(Math.random() * 10000)}`
                     }
                     alt={event.group?.name || "Group"}
                     style={{
@@ -147,9 +145,7 @@ const EventList: React.FC<EventListProps> = ({ events }) => {
                       objectFit: "cover",
                     }}
                     onError={(e) => {
-                      e.currentTarget.src = `https://picsum.photos/id/${
-                        ((event.group?.id || 1) % 200) + 1
-                      }/80/80`;
+                      e.currentTarget.src = `https://picsum.photos/80/80?random=${Math.floor(Math.random() * 10000)}`;
                     }}
                   />
                 </div>
