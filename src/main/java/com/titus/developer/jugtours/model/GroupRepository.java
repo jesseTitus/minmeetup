@@ -15,4 +15,8 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     @Query("SELECT DISTINCT u FROM Group g JOIN g.users u WHERE g.id = :id")
     List<User> findAllMembersByGroupId(@Param("id") Long groupId);
+
+    // Optimized query to fetch groups with their members and events (but not event attendees)
+    @Query("SELECT DISTINCT g FROM Group g LEFT JOIN FETCH g.users LEFT JOIN FETCH g.events")
+    List<Group> findAllWithMembersAndEvents();
 }

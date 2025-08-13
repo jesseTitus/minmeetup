@@ -61,7 +61,7 @@ class GroupController {
     @GetMapping("/groups/available")
     Collection<Group> availableGroups() {
         // log.info("=== FETCHING AVAILABLE GROUPS ===");
-        Collection<Group> groups = groupRepository.findAll();
+        Collection<Group> groups = groupRepository.findAllWithMembersAndEvents();
         // log.info("Found {} groups", groups.size());
 
         // Ensure all groups have consistent images
