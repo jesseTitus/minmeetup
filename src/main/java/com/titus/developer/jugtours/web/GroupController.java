@@ -81,6 +81,35 @@ class GroupController {
         return groups;
     }
 
+    @GetMapping("/groups/summary")
+    Collection<Map<String, Object>> getGroupSummaries() {
+        long startTime = System.currentTimeMillis();
+        
+        List<Object[]> summaries = groupRepository.findAllGroupSummaries();
+        
+        List<Map<String, Object>> result = summaries.stream()
+            .map(row -> {
+                Map<String, Object> group = new HashMap<>();
+                group.put("id", row[0]);
+                group.put("name", row[1]);
+                group.put("imageUrl", row[2]);
+                group.put("address", row[3]);
+                group.put("city", row[4]);
+                group.put("stateOrProvince", row[5]);
+                group.put("country", row[6]);
+                group.put("postalCode", row[7]);
+                group.put("memberCount", row[8]);
+                group.put("eventCount", row[9]);
+                return group;
+            })
+            .collect(Collectors.toList());
+            
+        long endTime = System.currentTimeMillis();
+        log.info("Group summaries fetched in {}ms - {} groups", endTime - startTime, result.size());
+        
+        return result;
+    }
+
     @GetMapping("/groups/{id}/events/paginated")
     ResponseEntity<Map<String, Object>> getGroupEventsPaginated(
             @PathVariable Long id,
