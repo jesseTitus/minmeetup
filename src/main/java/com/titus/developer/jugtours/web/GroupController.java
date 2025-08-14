@@ -43,19 +43,45 @@ class GroupController {
     }
 
     @GetMapping("/groups")
-    Collection<Group> groups(Principal principal, HttpServletRequest request) {
+    Collection<Map<String, Object>> groups(Principal principal, HttpServletRequest request) {
+        long startTime = System.currentTimeMillis();
+        
         String userId = getUserId(principal, request);
-        Collection<Group> userGroups = groupRepository.findAllByUserId(userId);
+        List<Object[]> userGroupSummaries = groupRepository.findUserGroupSummaries(userId);
 
-        // Ensure all groups have consistent images
-        userGroups.forEach(group -> {
-            if (group.getImageUrl() == null || group.getImageUrl().isEmpty()) {
-                group.setImageUrl(imageService.generateRandomImageUrl(group.getId()));
-                groupRepository.save(group);
-            }
-        });
+        List<Map<String, Object>> result = userGroupSummaries.stream()
+            .map(row -> {
+                Map<String, Object> group = new HashMap<>();
+                Long groupId = (Long) row[0];
+                String name = (String) row[1];
+                String imageUrl = (String) row[2];
+                
+                // Ensure group has consistent image
+                if (imageUrl == null || imageUrl.isEmpty()) {
+                    imageUrl = imageService.generateRandomImageUrl(groupId);
+                    
+                    // Update the database with the generated image URL
+                    Optional<Group> groupEntity = groupRepository.findById(groupId);
+                    if (groupEntity.isPresent()) {
+                        Group g = groupEntity.get();
+                        g.setImageUrl(imageUrl);
+                        groupRepository.save(g);
+                    }
+                }
+                
+                group.put("id", groupId);
+                group.put("name", name);
+                group.put("imageUrl", imageUrl);
+                group.put("memberCount", row[3]);
+                group.put("eventCount", row[4]);
+                return group;
+            })
+            .collect(Collectors.toList());
+            
+        long endTime = System.currentTimeMillis();
+        log.info("User groups fetched in {}ms - {} groups", endTime - startTime, result.size());
 
-        return userGroups;
+        return result;
     }
 
     @GetMapping("/groups/available")

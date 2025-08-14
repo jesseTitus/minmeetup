@@ -28,4 +28,15 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
            "LEFT JOIN g.events e " +
            "GROUP BY g.id, g.name, g.imageUrl, g.address, g.city, g.stateOrProvince, g.country, g.postalCode")
     List<Object[]> findAllGroupSummaries();
+
+    // Lightweight query for user's groups with counts
+    @Query("SELECT g.id, g.name, g.imageUrl, " +
+           "COUNT(DISTINCT u.id) as memberCount, COUNT(DISTINCT e.id) as eventCount " +
+           "FROM Group g " +
+           "JOIN g.users currentUser " +
+           "LEFT JOIN g.users u " +
+           "LEFT JOIN g.events e " +
+           "WHERE currentUser.id = :userId " +
+           "GROUP BY g.id, g.name, g.imageUrl")
+    List<Object[]> findUserGroupSummaries(@Param("userId") String userId);
 }
