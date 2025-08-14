@@ -70,7 +70,8 @@ class GroupControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].name").value("Test Group"))
-                .andExpect(jsonPath("$[0].address").value("123 Test St"));
+                .andExpect(jsonPath("$[0].memberCount").value(1))
+                .andExpect(jsonPath("$[0].eventCount").value(0));
     }
 
     @Test
