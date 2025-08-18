@@ -1,14 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Button, Container, Row, Col, Card, CardBody } from "reactstrap";
 import AppNavbar from "./AppNavbar";
 import { Link } from "react-router-dom";
-
-interface Event {
-  id: number;
-  date: string;
-  title: string;
-  description: string;
-}
+import { useAuth } from "./hooks/useAuth";
+import { useInfiniteGroups } from "./hooks/useInfiniteGroups";
+import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
 
 interface Group {
   id: number;
@@ -19,110 +15,38 @@ interface Group {
   stateOrProvince?: string;
   country?: string;
   postalCode?: string;
-  events?: Event[];
+  memberCount?: number;
+  eventCount?: number;
   isMember?: boolean;
 }
 
-// Helper function to get the JWT from localStorage
-const getJwtToken = () => {
-  return localStorage.getItem("jwt_token");
-};
-
-// Helper to create authorized headers
-const createAuthHeaders = () => {
-  const token = getJwtToken();
-  const headers: HeadersInit = {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
-};
-
 const GroupList = () => {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const { user, isLoading: authLoading, createAuthHeaders, handleAuthError } = useAuth();
+  const { 
+    groups, 
+    loading: groupsLoading, 
+    hasMore, 
+    loadMore, 
+    totalCount 
+  } = useInfiniteGroups();
   const [processingGroups, setProcessingGroups] = useState<Set<number>>(
     new Set()
   );
   const apiUrl = import.meta.env.VITE_API_URL;
 
-  useEffect(() => {
-    const initializeData = async () => {
-      setLoading(true);
-      const headers = createAuthHeaders();
-      const token = getJwtToken();
+  const loading = authLoading || groupsLoading;
 
-      // If there's no token, the user is not authenticated
-      if (!token) {
-        // Redirect to login or show a public state
-        window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
-        return;
-      }
-
-      try {
-        // 1. Fetch user data using the JWT
-        const userResponse = await fetch(`${apiUrl}/api/auth/user`, {
-          headers,
-        });
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUser(userData);
-        } else if (userResponse.status === 401 || userResponse.status === 403) {
-          // Handle expired or invalid token
-          localStorage.removeItem("jwt_token");
-          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
-          return;
-        }
-
-        // 2. Fetch groups data using the JWT
-        const allGroupsResponse = await fetch(
-          `${apiUrl}/api/groups/available`,
-          {
-            headers,
-          }
-        );
-        const userGroupsResponse = await fetch(`${apiUrl}/api/groups`, {
-          headers,
-        });
-
-        if (allGroupsResponse.ok && userGroupsResponse.ok) {
-          const [allGroups, userGroups] = await Promise.all([
-            allGroupsResponse.json(),
-            userGroupsResponse.json(),
-          ]);
-
-          // merge and sort groups
-          const userGroupIds = new Set(
-            userGroups.map((group: Group) => group.id)
-          );
-          const sortedGroups = allGroups
-            .map((group: Group) => ({
-              ...group,
-              isMember: userGroupIds.has(group.id),
-            }))
-            .sort((a: Group, b: Group) => {
-              if (a.isMember && !b.isMember) return -1;
-              if (!a.isMember && b.isMember) return 1;
-              return a.name.localeCompare(b.name);
-            });
-
-          setGroups(sortedGroups);
-        }
-      } catch (error) {
-        console.error("Error initializing data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeData();
-  }, [apiUrl]);
+  // Infinite scroll for groups
+  const { isFetching, setIsFetching } = useInfiniteScroll(() => {
+    if (hasMore && user) {
+      console.log("GroupList: Calling loadMore, hasMore:", hasMore);
+      loadMore();
+      setIsFetching(false);
+    } else {
+      console.log("GroupList: Not loading more - hasMore:", hasMore, "user:", !!user);
+      setIsFetching(false);
+    }
+  });
 
   const leaveGroup = useCallback(
     async (group: Group) => {
@@ -143,25 +67,12 @@ const GroupList = () => {
         );
 
         if (response.status === 401 || response.status === 403) {
-          localStorage.removeItem("jwt_token");
-          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          handleAuthError(response);
           return;
         }
 
         if (response.ok) {
-          // Optimized: Only update the specific group's membership status
-          setGroups((prevGroups) =>
-            prevGroups
-              .map((g) =>
-                g.id === group.id ? { ...g, isMember: false } : g
-              )
-              .sort((a: Group, b: Group) => {
-                // Re-sort after membership change
-                if (a.isMember && !b.isMember) return -1;
-                if (!a.isMember && b.isMember) return 1;
-                return a.name.localeCompare(b.name);
-              })
-          );
+          console.log("Successfully left group");
         } else {
           console.error("Failed to leave group");
           alert("Failed to leave group. Please try again.");
@@ -199,25 +110,12 @@ const GroupList = () => {
         );
 
         if (response.status === 401 || response.status === 403) {
-          localStorage.removeItem("jwt_token");
-          window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
+          handleAuthError(response);
           return;
         }
 
         if (response.ok) {
-          // Optimized: Only update the specific group's membership status
-          setGroups((prevGroups) =>
-            prevGroups
-              .map((g) =>
-                g.id === group.id ? { ...g, isMember: true } : g
-              )
-              .sort((a: Group, b: Group) => {
-                // Re-sort after membership change
-                if (a.isMember && !b.isMember) return -1;
-                if (!a.isMember && b.isMember) return 1;
-                return a.name.localeCompare(b.name);
-              })
-          );
+          console.log("Successfully joined group");
         } else {
           console.error("Failed to join group");
           alert("Failed to join group. Please try again.");
@@ -245,14 +143,13 @@ const GroupList = () => {
     return nameParts[0];
   }, [user]);
 
-  // Memoized group cards to prevent unnecessary re-renders
   const groupCards = useMemo(() => {
     return groups.map((group) => {
       const address = `${group.address || ""} ${group.city || ""} ${
         group.stateOrProvince || ""
       }`.trim();
 
-      const eventCount = group.events ? group.events.length : 0;
+      const eventCount = group.eventCount || 0;
       const isProcessing = processingGroups.has(group.id);
 
       return (
@@ -286,10 +183,10 @@ const GroupList = () => {
           Welcome, {getFirstName()} 👋
         </h3>
         <p style={{ color: "#666", marginBottom: "20px" }}>
-          {/* Groups you're a member of are shown first */}
+          Showing {groups.length} of {totalCount} groups
         </p>
 
-        {groups.length === 0 ? (
+        {groups.length === 0 && !loading ? (
           <div
             style={{
               textAlign: "center",
@@ -304,7 +201,27 @@ const GroupList = () => {
             </Button>
           </div>
         ) : (
-          <Row className="mt-4">{groupCards}</Row>
+          <>
+            <Row className="mt-4">{groupCards}</Row>
+            
+            {isFetching && (
+              <div style={{ textAlign: "center", padding: "20px" }}>
+                <p>Loading more groups...</p>
+              </div>
+            )}
+            
+            {!hasMore && groups.length > 0 && (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "20px",
+                  color: "#666",
+                }}
+              >
+                <p>You've reached the end! No more groups to load.</p>
+              </div>
+            )}
+          </>
         )}
       </Container>
     </div>

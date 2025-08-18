@@ -136,6 +136,98 @@ class GroupController {
         return result;
     }
 
+    @GetMapping("/groups/available/paginated")
+    ResponseEntity<Map<String, Object>> getAvailableGroupsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            Principal principal, 
+            HttpServletRequest request) {
+        
+        long startTime = System.currentTimeMillis();
+        String userId = getUserId(principal, request);
+        
+        // Get all group summaries
+        List<Object[]> summaries = groupRepository.findAllGroupSummaries();
+        
+        // Convert to maps and add membership status
+        List<Map<String, Object>> allGroups = summaries.stream()
+            .map(row -> {
+                Map<String, Object> group = new HashMap<>();
+                Long groupId = (Long) row[0];
+                String imageUrl = (String) row[2];
+                
+                // Ensure group has consistent image
+                if (imageUrl == null || imageUrl.isEmpty()) {
+                    imageUrl = imageService.generateRandomImageUrl(groupId);
+                    
+                    // Update the database with the generated image URL
+                    Optional<Group> groupEntity = groupRepository.findById(groupId);
+                    if (groupEntity.isPresent()) {
+                        Group g = groupEntity.get();
+                        g.setImageUrl(imageUrl);
+                        groupRepository.save(g);
+                    }
+                }
+                
+                group.put("id", groupId);
+                group.put("name", row[1]);
+                group.put("imageUrl", imageUrl);
+                group.put("address", row[3]);
+                group.put("city", row[4]);
+                group.put("stateOrProvince", row[5]);
+                group.put("country", row[6]);
+                group.put("postalCode", row[7]);
+                group.put("memberCount", row[8]);
+                group.put("eventCount", row[9]);
+                
+                // Check if user is a member of this group
+                group.put("isMember", checkUserMembership(groupId, userId));
+                
+                return group;
+            })
+            .sorted((a, b) -> {
+                // Sort by membership status first (members first), then by name
+                Boolean aMember = (Boolean) a.get("isMember");
+                Boolean bMember = (Boolean) b.get("isMember");
+                
+                if (aMember && !bMember) return -1;
+                if (!aMember && bMember) return 1;
+                
+                return ((String) a.get("name")).compareToIgnoreCase((String) b.get("name"));
+            })
+            .collect(Collectors.toList());
+        
+        // Manual pagination
+        int start = page * size;
+        int end = Math.min(start + size, allGroups.size());
+        List<Map<String, Object>> pageContent = start < allGroups.size() ? allGroups.subList(start, end) : List.of();
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageContent);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("totalElements", allGroups.size());
+        response.put("totalPages", (int) Math.ceil((double) allGroups.size() / size));
+        response.put("hasNext", end < allGroups.size());
+        
+        long endTime = System.currentTimeMillis();
+        log.info("Paginated available groups fetched in {}ms - page {} of {} (total {} groups)", 
+                endTime - startTime, page, response.get("totalPages"), allGroups.size());
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    private boolean checkUserMembership(Long groupId, String userId) {
+        try {
+            return groupRepository.findById(groupId)
+                .map(group -> group.hasUser(userId))
+                .orElse(false);
+        } catch (Exception e) {
+            log.warn("Error checking membership for user {} in group {}: {}", userId, groupId, e.getMessage());
+            return false;
+        }
+    }
+
     @GetMapping("/groups/{id}/events/paginated")
     ResponseEntity<Map<String, Object>> getGroupEventsPaginated(
             @PathVariable Long id,

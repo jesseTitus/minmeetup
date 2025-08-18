@@ -10,7 +10,6 @@ export const useInfiniteScroll = (fetchMore: () => void): UseInfiniteScrollRetur
 
   useEffect(() => {
     const handleScroll = () => {
-      // Trigger when user is within 1000px of the bottom
       if (
         window.innerHeight + document.documentElement.scrollTop >= 
         document.documentElement.offsetHeight - 1000 && 
