@@ -21,6 +21,7 @@ interface PaginatedGroupsReturn {
   hasMore: boolean;
   loadMore: () => void;
   totalCount: number;
+  updateGroupMembership: (groupId: number, isMember: boolean) => void;
 }
 
 export const useInfiniteGroups = (): PaginatedGroupsReturn => {
@@ -109,11 +110,20 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
     }
   }, [user]); // Only depend on user to trigger initial load
 
+  const updateGroupMembership = useCallback((groupId: number, isMember: boolean) => {
+    setGroups(prevGroups =>
+      prevGroups.map(group =>
+        group.id === groupId ? { ...group, isMember } : group
+      )
+    );
+  }, []);
+
   return {
     groups,
     loading,
     hasMore,
     loadMore,
     totalCount,
+    updateGroupMembership,
   };
 };

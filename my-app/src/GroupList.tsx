@@ -27,7 +27,8 @@ const GroupList = () => {
     loading: groupsLoading, 
     hasMore, 
     loadMore, 
-    totalCount 
+    totalCount,
+    updateGroupMembership 
   } = useInfiniteGroups();
   const [processingGroups, setProcessingGroups] = useState<Set<number>>(
     new Set()
@@ -72,6 +73,7 @@ const GroupList = () => {
         }
 
         if (response.ok) {
+          updateGroupMembership(group.id, false);
           console.log("Successfully left group");
         } else {
           console.error("Failed to leave group");
@@ -115,6 +117,7 @@ const GroupList = () => {
         }
 
         if (response.ok) {
+          updateGroupMembership(group.id, true);
           console.log("Successfully joined group");
         } else {
           console.error("Failed to join group");
