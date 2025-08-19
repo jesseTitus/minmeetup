@@ -2,10 +2,12 @@ package com.titus.developer.jugtours.web;
 
 import com.titus.developer.jugtours.messaging.RsvpMessage;
 import com.titus.developer.jugtours.messaging.RsvpMessageProducer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
+// @RestController
+@ConditionalOnProperty(name = "rabbitmq.enabled", havingValue = "true", matchIfMissing = false)
 @RequestMapping("/api/test")
 public class RsvpTestController {
     

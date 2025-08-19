@@ -8,11 +8,13 @@ import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
-@EnableRabbit
+// @Configuration
+// @EnableRabbit
+// @ConditionalOnProperty(name = "rabbitmq.enabled", havingValue = "true", matchIfMissing = false)
 public class RabbitConfig {
 
     // Queue names
@@ -29,43 +31,43 @@ public class RabbitConfig {
     public static final String RSVP_CANCELLED_ROUTING_KEY = "rsvp.cancelled";
 
     // Queues
-    @Bean
+    // @Bean
     public Queue rsvpConfirmedQueue() {
         return new Queue(RSVP_CONFIRMED_QUEUE, true); // durable = true
     }
 
-    @Bean
+    // @Bean
     public Queue waitlistQueue() {
         return new Queue(WAITLIST_QUEUE, true);
     }
 
-    @Bean
+    // @Bean
     public Queue rsvpCancelledQueue() {
         return new Queue(RSVP_CANCELLED_QUEUE, true);
     }
 
     // Exchange
-    @Bean
+    // @Bean
     public TopicExchange rsvpExchange() {
         return new TopicExchange(RSVP_EXCHANGE);
     }
 
     // Bindings
-    @Bean
+    // @Bean
     public Binding rsvpConfirmedBinding() {
         return BindingBuilder.bind(rsvpConfirmedQueue())
                 .to(rsvpExchange())
                 .with(RSVP_CONFIRMED_ROUTING_KEY);
     }
 
-    @Bean
+    // @Bean
     public Binding waitlistBinding() {
         return BindingBuilder.bind(waitlistQueue())
                 .to(rsvpExchange())
                 .with(WAITLIST_ROUTING_KEY);
     }
 
-    @Bean
+    // @Bean
     public Binding rsvpCancelledBinding() {
         return BindingBuilder.bind(rsvpCancelledQueue())
                 .to(rsvpExchange())
@@ -73,13 +75,13 @@ public class RabbitConfig {
     }
 
     // JSON message converter
-    @Bean
+    // @Bean
     public Jackson2JsonMessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
     // RabbitTemplate with JSON converter
-    @Bean
+    // @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter());

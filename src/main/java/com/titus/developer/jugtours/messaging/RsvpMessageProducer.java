@@ -4,9 +4,11 @@ import com.titus.developer.jugtours.config.RabbitConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-@Service
+// @Service
+@ConditionalOnProperty(name = "rabbitmq.enabled", havingValue = "true", matchIfMissing = false)
 public class RsvpMessageProducer {
     
     private static final Logger log = LoggerFactory.getLogger(RsvpMessageProducer.class);
