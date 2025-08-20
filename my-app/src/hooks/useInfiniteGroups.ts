@@ -48,7 +48,10 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
   };
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore || !hasValidToken()) return;
+    if (loading || !hasMore || !hasValidToken() || !user) {
+      console.log('Skipping loadMore - loading:', loading, 'hasMore:', hasMore, 'hasValidToken:', hasValidToken(), 'user:', !!user);
+      return;
+    }
 
     console.log('Loading more groups - Page:', currentPage);
     setLoading(true);
@@ -66,8 +69,12 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
       );
 
       if (!response.ok) {
-        handleAuthError(response);
-        throw new Error('Failed to fetch groups');
+        if (response.status === 401 || response.status === 403) {
+          console.log('Authentication error, handling redirect');
+          handleAuthError(response);
+          return;
+        }
+        throw new Error(`Failed to fetch groups: ${response.status}`);
       }
 
       const data = await response.json();
@@ -82,7 +89,7 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError]);
+  }, [currentPage, loading, hasMore, createAuthHeaders, handleAuthError, user]);
 
   // Reset pagination when user changes
   useEffect(() => {
