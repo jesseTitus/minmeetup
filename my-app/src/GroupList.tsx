@@ -37,13 +37,6 @@ const GroupList = () => {
 
   const loading = authLoading || groupsLoading;
 
-  // Redirect to login if not authenticated
-  
-  if (!authLoading && !user) {
-    window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
-    return <div>Redirecting to login...</div>;
-  }
-
   // Infinite scroll for groups
   const { isFetching, setIsFetching } = useInfiniteScroll(() => {
     if (hasMore && user) {

@@ -48,8 +48,7 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
   };
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore || !hasValidToken() || !user) {
-      console.log('Skipping loadMore - loading:', loading, 'hasMore:', hasMore, 'hasValidToken:', hasValidToken(), 'user:', !!user);
+    if (loading || !hasMore || !user) {
       return;
     }
 
@@ -69,12 +68,8 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
       );
 
       if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          console.log('Authentication error, handling redirect');
-          handleAuthError(response);
-          return;
-        }
-        throw new Error(`Failed to fetch groups: ${response.status}`);
+        handleAuthError(response);
+        throw new Error('Failed to fetch groups');
       }
 
       const data = await response.json();
@@ -104,7 +99,7 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
 
   // Load data when needed
   useEffect(() => {
-    if (needsLoad && hasValidToken() && !loading && user) {
+    if (needsLoad && !loading && user) {
       setNeedsLoad(false);
       loadMore();
     }
@@ -112,7 +107,7 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
 
   // Load initial data on mount
   useEffect(() => {
-    if (currentPage === 0 && groups.length === 0 && hasValidToken() && !needsLoad && user) {
+    if (currentPage === 0 && groups.length === 0 && !needsLoad && user) {
       setNeedsLoad(true);
     }
   }, [user]); // Only depend on user to trigger initial load
