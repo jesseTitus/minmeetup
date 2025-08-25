@@ -51,7 +51,7 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
            "LEFT JOIN g.events e " +
            "LEFT JOIN g.users currentUser ON currentUser.id = :userId " +
            "GROUP BY g.id, g.name, g.imageUrl, g.address, g.city, g.stateOrProvince, g.country, g.postalCode, " +
-           "CASE WHEN currentUser.id IS NOT NULL THEN true ELSE false END " +
+           "currentUser.id " +
            "ORDER BY CASE WHEN currentUser.id IS NOT NULL THEN 0 ELSE 1 END, g.name")
     Page<Object[]> findAllGroupSummariesPaginated(@Param("userId") String userId, Pageable pageable);
 }
