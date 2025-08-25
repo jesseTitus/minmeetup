@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api")
@@ -143,11 +144,11 @@ class GroupController {
     ResponseEntity<Map<String, Object>> getAvailableGroupsPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
-            Principal principal, 
             HttpServletRequest request) {
         
         long startTime = System.currentTimeMillis();
-        String userId = getUserId(principal, request);
+        String userId = getCurrentUserId(request);
+        log.info("Paginated groups request - userId: {}, page: {}, size: {}", userId, page, size);
         
         // Use database-level pagination
         Pageable pageable = PageRequest.of(page, size);
@@ -548,6 +549,26 @@ class GroupController {
         }
         // Fallback to OAuth2
         return principal.getName();
+    }
+
+    private String getCurrentUserId(HttpServletRequest request) {
+        // Try JWT claims first (set by JwtAuthenticationFilter)
+        io.jsonwebtoken.Claims claims = (io.jsonwebtoken.Claims) request.getAttribute("jwtClaims");
+        if (claims != null) {
+            log.debug("Got userId from JWT claims: {}", claims.getSubject());
+            return claims.getSubject();
+        }
+        
+        // Fallback to SecurityContext (works for both JWT and OAuth2)
+        org.springframework.security.core.Authentication authentication = 
+            SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            log.debug("Got userId from SecurityContext: {}", authentication.getName());
+            return authentication.getName();
+        }
+        
+        log.warn("No userId found - neither JWT claims nor SecurityContext available");
+        return null;
     }
 
     private Map<String, Object> getUserDetails(Principal principal, HttpServletRequest request) {
