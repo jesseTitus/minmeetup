@@ -33,20 +33,6 @@ export const useInfiniteGroups = (): PaginatedGroupsReturn => {
   const [totalCount, setTotalCount] = useState(0);
   const [needsLoad, setNeedsLoad] = useState(false);
 
-  // Check if user has a valid token
-  const hasValidToken = () => {
-    const token = localStorage.getItem("jwt_token");
-    if (!token) return false;
-    
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const now = Date.now() / 1000;
-      return payload.exp > now; // Check if token is not expired
-    } catch {
-      return false;
-    }
-  };
-
   const loadMore = useCallback(async () => {
     if (loading || !hasMore || !user) {
       return;
