@@ -20,9 +20,15 @@ const createAuthHeaders = (): HeadersInit => {
     "Content-Type": "application/json",
   };
 
-  if (token) {
+  if (token && !isTokenExpired(token)) {
     headers["Authorization"] = `Bearer ${token}`;
+  } else if (token && isTokenExpired(token)) {
+    // Token is expired, remove it and redirect to login
+    localStorage.removeItem("jwt_token");
+    const apiUrl = import.meta.env.VITE_API_URL;
+    window.location.href = `${apiUrl}/oauth2/authorization/auth0`;
   }
+  
   return headers;
 };
 
@@ -36,6 +42,14 @@ const decodeJwtPayload = (token: string) => {
   }
 };
 
+const isTokenExpired = (token: string): boolean => {
+  const payload = decodeJwtPayload(token);
+  if (!payload || !payload.exp) return true;
+  
+  const now = Date.now() / 1000;
+  return payload.exp < now;
+};
+
 export const useAuth = (): UseAuthReturn => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +57,7 @@ export const useAuth = (): UseAuthReturn => {
   useEffect(() => {
     const token = getJwtToken();
     
-    if (token) {
+    if (token && !isTokenExpired(token)) {
       const payload = decodeJwtPayload(token);
       if (payload) {
         setUser({
@@ -53,6 +67,10 @@ export const useAuth = (): UseAuthReturn => {
           picture: payload.picture,
         });
       }
+    } else if (token && isTokenExpired(token)) {
+      // Remove expired token
+      localStorage.removeItem("jwt_token");
+      setUser(null);
     }
     
     setIsLoading(false);
