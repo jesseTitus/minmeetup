@@ -1,6 +1,9 @@
-# JUG Tours
+# Minmeetup
 
-A full-stack web application for managing Java User Group (JUG) events and tours. Users can discover JUG groups, join them, and manage events.
+A full-stack web application for managing social events and tours. Users can discover groups, join them, and manage events.
+
+## System Architecture
+![Screenshot](./images/mermaid-chart-minmeetup.png)
 
 ## Features
 
