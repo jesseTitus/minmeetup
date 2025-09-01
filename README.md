@@ -1,3 +1,5 @@
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=jessTitus.minmeetup)
+
 # Minmeetup
 
 A full-stack web application for managing social events and tours. Users can discover groups, join them, and manage events.
@@ -34,7 +36,6 @@ A full-stack web application for managing social events and tours. Users can dis
 - Modern component architecture
 - Mobile-friendly design
 
-![Visitors](https://visitor-badge.laobi.icu/badge?page_id=jessTitus.minmeetup)
 
 ## Tech Stack
 
